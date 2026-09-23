@@ -1,10 +1,6 @@
 package com.playhavior.service;
 
-import com.playhavior.entity.BanReport;
-import com.playhavior.entity.Case;
-import com.playhavior.entity.LearningPathway;
-import com.playhavior.entity.Player;
-import com.playhavior.entity.SummaryReport;
+import com.playhavior.entity.*;
 import com.playhavior.repository.BanReportRepository;
 import com.playhavior.repository.CaseRepository;
 import com.playhavior.repository.LearningPathwayRepository;
@@ -12,6 +8,9 @@ import com.playhavior.repository.PlayerProfileRepository;
 import com.playhavior.repository.SummaryReportRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.playhavior.repository.PlatformRepository;
+
+
 
 @Service
 public class PlayhaviorWorkflowService {
@@ -21,19 +20,33 @@ public class PlayhaviorWorkflowService {
     private final BanReportRepository banReportRepository;
     private final LearningPathwayRepository learningPathwayRepository;
     private final SummaryReportRepository summaryReportRepository;
+    private final PlatformRepository platformRepository;
+    private final PlatformPolicyService platformPolicyService;
+    private final CategoryMappingService categoryMappingService;
+    private final PenaltyEligibilityService penaltyEligibilityService;
 
     public PlayhaviorWorkflowService(
             PlayerProfileRepository playerProfileRepository,
             CaseRepository caseRepository,
             BanReportRepository banReportRepository,
             LearningPathwayRepository learningPathwayRepository,
-            SummaryReportRepository summaryReportRepository) {
+            SummaryReportRepository summaryReportRepository,
+            PlatformRepository platformRepository,
+            PlatformPolicyService platformPolicyService,
+            CategoryMappingService categoryMappingService,
+            PenaltyEligibilityService penaltyEligibilityService
+    ) {
 
         this.playerProfileRepository = playerProfileRepository;
         this.caseRepository = caseRepository;
         this.banReportRepository = banReportRepository;
         this.learningPathwayRepository = learningPathwayRepository;
         this.summaryReportRepository = summaryReportRepository;
+
+        this.platformRepository = platformRepository;
+        this.platformPolicyService = platformPolicyService;
+        this.categoryMappingService = categoryMappingService;
+        this.penaltyEligibilityService = penaltyEligibilityService;
     }
 
     @Transactional
@@ -42,7 +55,7 @@ public class PlayhaviorWorkflowService {
             String email,
             String password,
             String statedReason,
-            String platform) {
+            Platform platform) {
 
         Player player = new Player();
         player.setDisplay_name(displayName);
