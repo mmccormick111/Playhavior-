@@ -33,6 +33,9 @@ public class BanReport {
     @JoinColumn(name = "platform_id", nullable = false)
     private Platform platform;
 
+    @Column(name = "game_title", length = 150)
+    private String gameTitle;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "penalty_type", nullable = false)
     private PenaltyType penaltyType;
@@ -87,6 +90,14 @@ public class BanReport {
 
     public void setPlatform(Platform platform) {
         this.platform = platform;
+    }
+
+    public String getGameTitle() {
+        return gameTitle;
+    }
+
+    public void setGameTitle(String gameTitle) {
+        this.gameTitle = gameTitle;
     }
 
     public PenaltyType getPenaltyType() {

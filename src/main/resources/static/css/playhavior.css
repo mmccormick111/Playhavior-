@@ -10,6 +10,10 @@
     --muted: #687386;
     --border: #dbe2ec;
     --danger: #b42318;
+    --green: #4caf7a;
+    --purple-bg: #f1e9fd;
+    --purple: #7c3aed;
+    --teal-bg: #dff5f1;
     --shadow: 0 14px 36px rgba(33, 49, 84, 0.08);
 }
 
@@ -22,6 +26,13 @@ body {
     background: var(--background);
     color: var(--text);
     font-family: "Inter", Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+.brand {
+    font-family: "Poppins", "Inter", Arial, sans-serif;
 }
 
 .site-header {
@@ -79,6 +90,16 @@ body {
     line-height: 1.35;
     text-align: center;
     text-decoration: none;
+}
+
+.nav-disabled {
+    display: flex;
+    align-items: center;
+    min-height: 66px;
+    padding: 0 22px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 18px;
+    cursor: not-allowed;
 }
 
 .nav-links a:hover {
@@ -254,6 +275,27 @@ textarea:focus {
     margin-right: 8px;
 }
 
+.checkbox-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 14px;
+    cursor: pointer;
+}
+
+.checkbox-option input {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    min-height: auto;
+    margin: 2px 0 0;
+    accent-color: var(--teal);
+}
+
+.notice-box > p:first-child {
+    margin-top: 0;
+}
+
 .conditional-field {
     display: none;
 }
@@ -306,6 +348,12 @@ textarea:focus {
     background: var(--navy-dark);
 }
 
+.primary-button:disabled,
+.sign-out:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
 .secondary-button {
     border: 2px solid var(--border);
     background: white;
@@ -334,6 +382,200 @@ textarea:focus {
     border-radius: 12px;
     background: #fff1f0;
     color: var(--danger);
+}
+
+/* ---------- Learning pathway page ---------- */
+
+.pathway-page {
+    width: min(980px, calc(100% - 40px));
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 26px;
+}
+
+.chip {
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.chip-navy { background: #e8edf8; color: var(--navy); }
+.chip-purple { background: var(--purple-bg); color: var(--purple); }
+.chip-teal { background: var(--teal-bg); color: #1f8a80; }
+.chip-grey { background: #eef0f4; color: var(--muted); }
+
+.pathway-title {
+    margin: 0 0 12px;
+    color: var(--navy);
+    font-size: 24px;
+}
+
+.card {
+    margin-bottom: 30px;
+    padding: 32px 38px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.card h2 {
+    margin: 0 0 8px;
+    font-size: 24px;
+}
+
+.card > .muted,
+.card p.muted {
+    margin: 0;
+}
+
+.progress-card {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+}
+
+.progress-area {
+    flex: 1;
+    text-align: right;
+}
+
+.progress-track {
+    height: 12px;
+    border-radius: 999px;
+    background: #e7ebf1;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--teal);
+}
+
+.module-timeline {
+    position: relative;
+    margin: 0 0 40px;
+    padding: 0;
+    list-style: none;
+}
+
+.module-timeline::before {
+    content: "";
+    position: absolute;
+    top: 30px;
+    bottom: 30px;
+    left: 29px;
+    width: 3px;
+    background: #cfe9e3;
+}
+
+.module-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.module-marker {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 60px;
+    height: 60px;
+    display: grid;
+    place-items: center;
+    margin-top: 18px;
+    border-radius: 50%;
+    background: #eef0f4;
+    color: var(--muted);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.is-done .module-marker {
+    background: var(--green);
+    color: white;
+}
+
+.is-current .module-marker {
+    background: var(--navy);
+    color: white;
+    box-shadow: 0 0 0 6px #e2e7f3;
+}
+
+.module-card {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 26px 32px;
+}
+
+.is-current .module-card {
+    border: 2px solid var(--navy);
+}
+
+.is-locked .module-card {
+    opacity: 0.7;
+}
+
+.module-card h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.module-meta {
+    margin: 0 0 8px;
+    color: var(--muted);
+}
+
+.module-description {
+    margin: 0;
+    color: var(--teal);
+}
+
+.locked-label {
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.detail-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 30px;
+    margin: 20px 0 0;
+}
+
+.detail-list dt {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.detail-list dd {
+    margin: 4px 0 0;
+    font-weight: 600;
+}
+
+.notice-box h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+}
+
+.notice-box p {
+    margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -390,5 +632,29 @@ textarea:focus {
 
     .sign-out {
         display: none;
+    }
+
+    .progress-card,
+    .module-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .progress-area {
+        text-align: left;
+    }
+
+    .module-timeline::before {
+        left: 21px;
+    }
+
+    .module-marker {
+        flex-basis: 44px;
+        height: 44px;
+        font-size: 17px;
+    }
+
+    .card {
+        padding: 24px 20px;
     }
 }

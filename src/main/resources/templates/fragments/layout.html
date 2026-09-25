@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Shared <head>: pass the page title in, e.g.
+     th:replace="~{fragments/layout :: head('Submit Your Notice')}" -->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} + ' | PlayHavior'">PlayHavior</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap">
+
+  <link rel="stylesheet" th:href="@{/css/playhavior.css}">
+</head>
+
+<body>
+
+<!-- Shared header: pass the active nav item
+     ('dashboard', 'pathway', 'notice' or 'completion'). -->
+<header class="site-header" th:fragment="header(active)">
+  <nav class="nav-shell" aria-label="Main navigation">
+
+    <a th:href="@{/}" class="brand">
+      <span class="brand-icon" aria-hidden="true">🎮</span>
+      <span>PlayHavior</span>
+    </a>
+
+    <div class="nav-links">
+      <!-- Dashboard and Completion pages are not built yet. -->
+      <span class="nav-disabled" title="Coming soon">Dashboard</span>
+
+      <a th:href="@{/pathways/latest}"
+         th:classappend="${active == 'pathway'} ? 'active'"
+         th:attr="aria-current=${active == 'pathway'} ? 'page'">
+        My Pathway
+      </a>
+
+      <a th:href="@{/notices/new}"
+         th:classappend="${active == 'notice'} ? 'active'"
+         th:attr="aria-current=${active == 'notice'} ? 'page'">
+        Submit Notice
+      </a>
+
+      <span class="nav-disabled" title="Coming soon">Completion</span>
+    </div>
+
+    <div class="nav-account">
+      <button type="button" class="sign-out" disabled title="Login is not built yet">
+        Sign out
+      </button>
+      <div class="avatar" aria-label="Demo player">JL</div>
+    </div>
+
+  </nav>
+</header>
+
+</body>
+</html>
