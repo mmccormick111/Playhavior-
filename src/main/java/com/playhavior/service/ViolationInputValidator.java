@@ -31,8 +31,8 @@ public class ViolationInputValidator {
     ) {
         boolean durationRequired =
                 form.getPenaltyType() == PenaltyType.TEMPORARY_BAN
-                        || form.getPenaltyType()
-                        == PenaltyType.ACCOUNT_SUSPENSION;
+                        || form.getPenaltyType() == PenaltyType.ACCOUNT_SUSPENSION
+                        || form.getPenaltyType() == PenaltyType.COMMUNICATION_RESTRICTION;
 
         if (!durationRequired) {
             form.setPenaltyDurationAmount(null);

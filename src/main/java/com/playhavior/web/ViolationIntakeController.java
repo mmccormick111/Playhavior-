@@ -82,6 +82,6 @@ public class ViolationIntakeController {
                 );
 
         return "redirect:/pathways/"
-                + pathway.getPathway_ID();
+                + pathway.getPathwayId();
     }
 }

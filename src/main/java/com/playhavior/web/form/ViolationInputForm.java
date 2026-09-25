@@ -24,6 +24,9 @@ public class ViolationInputForm {
     @NotBlank(message = "Select the platform that issued the notice.")
     private String platformKey;
 
+    @Size(max = 150)
+    private String gameTitle;
+
     @NotNull(message = "Select the type of penalty.")
     private PenaltyType penaltyType;
 
@@ -78,6 +81,14 @@ public class ViolationInputForm {
 
     public void setPlatformKey(String platformKey) {
         this.platformKey = platformKey;
+    }
+
+    public String getGameTitle() {
+        return gameTitle;
+    }
+
+    public void setGameTitle(String gameTitle) {
+        this.gameTitle = gameTitle;
     }
 
     public PenaltyType getPenaltyType() {

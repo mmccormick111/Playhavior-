@@ -1,144 +1,162 @@
 <!DOCTYPE html>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
 
-  <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1">
-
-  <title>Your Pathway | PlayHavior</title>
-
-
-  th:href="@{/css/playhavior.css}">
-</head>
+<head th:replace="~{fragments/layout :: head('Your Learning Pathway')}"></head>
 
 <body>
 
-<header class="site-header">
-  <nav class="nav-shell">
+<header th:replace="~{fragments/layout :: header('pathway')}"></header>
 
-    <a th:href="@{/}" class="brand">
-      <span class="brand-icon">🎮</span>
-      <span>PlayHavior</span>
-    </a>
+<main class="page-shell pathway-page">
 
-    <div class="nav-links">
-      <a th:href="@{/}">Dashboard</a>
-
-      <a class="active"
-         th:href="@{/pathways/{id}(id=${pathway.pathway_ID})}">
-        My Pathway
-      </a>
-
-      <a th:href="@{/notices/new}">
-        Submit Notice
-      </a>
-
-      <a th:href="@{/completion}">
-        Completion
-      </a>
-    </div>
-  </nav>
-</header>
-
-<main class="page-shell">
+  <!-- Summary chips -->
+  <div class="chip-row">
+    <span class="chip chip-navy"
+          th:text="${@labels.of(pathway.violationCategory)}">Category</span>
+    <span class="chip chip-purple"
+          th:text="${@labels.of(pathway.pathwayMode)}">Mode</span>
+    <span class="chip chip-teal"
+          th:text="${pathway.totalModules} + ' Modules'">5 Modules</span>
+    <span class="chip chip-grey"
+          th:text="'~' + ${pathway.totalMinutes} + ' min'">~75 min</span>
+  </div>
 
   <section class="page-introduction">
-    <p class="step-label">STEP 2 OF 2</p>
-
     <h1>Your Learning Pathway</h1>
-
-    <p>
-      PlayHavior created this pathway from the reason
-      supplied in your platform notice.
-    </p>
+    <h2 class="pathway-title" th:text="${pathway.pathwayTitle}">Respectful Communication</h2>
+    <p>Built around your situation. This is practice, not a test. Move at your own pace.</p>
   </section>
 
-  <section class="form-card">
+  <!-- Overall progress -->
+  <section class="card progress-card">
+    <div>
+      <h2>Overall Progress</h2>
+      <p class="muted"
+         th:text="${pathway.completedModules} + ' of ' + ${pathway.totalModules} + ' modules complete'">
+        0 of 5 modules complete
+      </p>
+    </div>
 
-    <h2 th:text="${pathway.pathway_title}">
-      Pathway title
-    </h2>
-
-    <p>
-      <strong>Category:</strong>
-
-      <span
-              th:text="${pathway.violationCategory}">
-            </span>
-    </p>
-
-    <p>
-      <strong>Pathway type:</strong>
-
-      <span
-              th:text="${pathway.pathwayMode}">
-            </span>
-    </p>
-
-    <p>
-      <strong>Personalization:</strong>
-
-      <span
-              th:text="${pathway.personalizationLevel}">
-            </span>
-    </p>
-
-    <p>
-      <strong>Modules assigned:</strong>
-
-      <span
-              th:text="${pathway.total_modules}">
-            </span>
-    </p>
-
-    <section th:if="${!#lists.isEmpty(policyRules)}">
-
-      <h2>Relevant Platform Standards</h2>
-
-      <article
-              class="notice-box"
-              th:each="rule : ${policyRules}">
-
-        <h3 th:text="${rule.sectionTitle}">
-          Policy section
-        </h3>
-
-        <p th:text="${rule.ruleSummary}">
-          Rule summary
-        </p>
-
-        <p th:if="${rule.sectionReference != null}">
-          <strong>Section:</strong>
-
-          <span
-                  th:text="${rule.sectionReference}">
-                    </span>
-        </p>
-
-        <a
-                th:href="${pathway.platformPolicy.sourceUrl}"
-                target="_blank"
-                rel="noopener noreferrer">
-
-          View the official platform policy
-        </a>
-      </article>
-
-    </section>
-
-    <section th:if="${#lists.isEmpty(policyRules)}">
-      <div class="notice-box">
-        No category-specific policy reference has been
-        loaded for this platform yet. The educational
-        pathway can still be used, but policy research
-        should be added before the final prototype.
+    <div class="progress-area">
+      <div class="progress-track"
+           role="progressbar"
+           aria-valuemin="0"
+           aria-valuemax="100"
+           th:attr="aria-valuenow=${pathway.progressPercent}">
+        <div class="progress-fill"
+             th:style="'width:' + ${pathway.progressPercent} + '%'"></div>
       </div>
-    </section>
-
+      <p class="muted"
+         th:text="${pathway.progressPercent} + '% complete'">0% complete</p>
+    </div>
   </section>
+
+  <!-- Module timeline -->
+  <ol class="module-timeline">
+    <li class="module-row"
+        th:each="module : ${pathway.modules}"
+        th:classappend="${module.status.name() == 'AVAILABLE'} ? 'is-current' : (${module.status.name() == 'COMPLETED'} ? 'is-done' : 'is-locked')">
+
+      <div class="module-marker" aria-hidden="true">
+        <span th:if="${module.status.name() == 'COMPLETED'}">✓</span>
+        <span th:if="${module.status.name() == 'AVAILABLE'}" th:text="${module.moduleOrder}">1</span>
+        <span th:if="${module.status.name() == 'LOCKED'}">🔒</span>
+      </div>
+
+      <article class="card module-card">
+        <div class="module-text">
+          <h3 th:text="'Module ' + ${module.moduleOrder} + ': ' + ${module.title}">
+            Module 1: Understanding Community Standards
+          </h3>
+          <p class="module-meta">
+            <span th:text="${module.lessonCount} + ' lessons'">3 lessons</span>
+            ·
+            <span th:text="'⏱ ' + ${module.estimatedMinutes} + ' min'">⏱ 15 min</span>
+          </p>
+          <p class="module-description" th:text="${module.description}">Description</p>
+        </div>
+
+        <!-- Lesson pages are not built yet, so the action is disabled. -->
+        <button type="button"
+                class="primary-button"
+                th:if="${module.status.name() == 'AVAILABLE'}"
+                disabled
+                title="Lesson content coming soon">
+          Start Module
+        </button>
+        <span class="locked-label" th:if="${module.status.name() == 'LOCKED'}">Locked</span>
+      </article>
+    </li>
+  </ol>
+
+  <!-- Notice details (what was saved from the form) -->
+  <section class="card">
+    <h2>Your Notice</h2>
+
+    <dl class="detail-list">
+      <div>
+        <dt>Platform</dt>
+        <dd th:text="${banReport.platform.displayName}">Xbox</dd>
+      </div>
+      <div th:if="${banReport.gameTitle != null}">
+        <dt>Game</dt>
+        <dd th:text="${banReport.gameTitle}">Game</dd>
+      </div>
+      <div>
+        <dt>Reason stated</dt>
+        <dd th:text="${banReport.stated_reason}">Personal insults</dd>
+      </div>
+      <div>
+        <dt>Ban type</dt>
+        <dd>
+          <span th:text="${@labels.of(banReport.penaltyType)}">Temporary Ban</span>
+          <span th:if="${banReport.penaltyDurationAmount != null}"
+                th:text="'(' + ${banReport.penaltyDurationAmount} + ' ' + ${@labels.of(banReport.penaltyDurationUnit)} + ')'">(7 Days)</span>
+        </dd>
+      </div>
+      <div>
+        <dt>Date of notice</dt>
+        <dd th:text="${#temporals.format(banReport.banIssueDate, 'MMM d, yyyy')}">Sep 1, 2026</dd>
+      </div>
+      <div>
+        <dt>Platform reference code</dt>
+        <dd th:text="${banReport.platformCaseNumber != null} ? ${banReport.platformCaseNumber} : 'Not provided'">
+          Not provided
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- Platform policy citations from the CSV -->
+  <section class="card">
+    <h2>Platform Standards Referenced</h2>
+
+    <div th:if="${!#lists.isEmpty(policyRules)}">
+      <p class="muted">
+        From
+        <a th:href="${pathway.platformPolicy.sourceUrl}"
+           th:text="${pathway.platformPolicy.title}"
+           target="_blank"
+           rel="noopener noreferrer">the official platform policy</a>
+      </p>
+
+      <article class="notice-box" th:each="rule : ${policyRules}">
+        <h3>
+          <span th:text="${rule.sectionTitle}">Policy section</span>
+          <span class="muted" th:if="${rule.sectionReference != null}"
+                th:text="'· ' + ${rule.sectionReference}">· Standard 2</span>
+        </h3>
+        <p th:text="${rule.ruleSummary}">Rule summary</p>
+      </article>
+    </div>
+
+    <div class="notice-box" th:if="${#lists.isEmpty(policyRules)}">
+      No policy rule for this category has been loaded for this
+      platform yet. Add a row to platform-policy-rules.csv to cite one here.
+    </div>
+  </section>
+
 </main>
 
 </body>

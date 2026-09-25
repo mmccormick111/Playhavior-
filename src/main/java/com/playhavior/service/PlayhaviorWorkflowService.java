@@ -1,21 +1,20 @@
 package com.playhavior.service;
 
 import com.playhavior.entity.BanReport;
-import com.playhavior.entity.Case;
 import com.playhavior.entity.LearningPathway;
 import com.playhavior.entity.Platform;
 import com.playhavior.entity.PlatformPolicy;
 import com.playhavior.entity.Player;
+import com.playhavior.entity.PlayerCase;
 import com.playhavior.entity.SummaryReport;
 import com.playhavior.model.MappingResult;
 import com.playhavior.model.PathwayCode;
 import com.playhavior.model.PathwayMode;
 import com.playhavior.model.PersonalizationLevel;
 import com.playhavior.repository.BanReportRepository;
-import com.playhavior.repository.CaseRepository;
+import com.playhavior.repository.PlayerCaseRepository;
 import com.playhavior.repository.LearningPathwayRepository;
 import com.playhavior.repository.PlatformRepository;
-import com.playhavior.repository.PlayerProfileRepository;
 import com.playhavior.repository.SummaryReportRepository;
 import com.playhavior.web.form.ViolationInputForm;
 import org.springframework.stereotype.Service;
@@ -26,8 +25,7 @@ import java.time.LocalDateTime;
 @Service
 public class PlayhaviorWorkflowService {
 
-    private final PlayerProfileRepository playerProfileRepository;
-    private final CaseRepository caseRepository;
+    private final PlayerCaseRepository caseRepository;
     private final BanReportRepository banReportRepository;
     private final LearningPathwayRepository learningPathwayRepository;
     private final SummaryReportRepository summaryReportRepository;
@@ -35,19 +33,19 @@ public class PlayhaviorWorkflowService {
     private final PlatformPolicyService platformPolicyService;
     private final CategoryMappingService categoryMappingService;
     private final PenaltyEligibilityService penaltyEligibilityService;
+    private final ModulePlanService modulePlanService;
 
     public PlayhaviorWorkflowService(
-            PlayerProfileRepository playerProfileRepository,
-            CaseRepository caseRepository,
+            PlayerCaseRepository caseRepository,
             BanReportRepository banReportRepository,
             LearningPathwayRepository learningPathwayRepository,
             SummaryReportRepository summaryReportRepository,
             PlatformRepository platformRepository,
             PlatformPolicyService platformPolicyService,
             CategoryMappingService categoryMappingService,
-            PenaltyEligibilityService penaltyEligibilityService
+            PenaltyEligibilityService penaltyEligibilityService,
+            ModulePlanService modulePlanService
     ) {
-        this.playerProfileRepository = playerProfileRepository;
         this.caseRepository = caseRepository;
         this.banReportRepository = banReportRepository;
         this.learningPathwayRepository = learningPathwayRepository;
@@ -56,6 +54,7 @@ public class PlayhaviorWorkflowService {
         this.platformPolicyService = platformPolicyService;
         this.categoryMappingService = categoryMappingService;
         this.penaltyEligibilityService = penaltyEligibilityService;
+        this.modulePlanService = modulePlanService;
     }
 
     @Transactional
@@ -63,9 +62,6 @@ public class PlayhaviorWorkflowService {
             Player player,
             ViolationInputForm form
     ) {
-        Player savedPlayer =
-                playerProfileRepository.save(player);
-
         Platform platform = findPlatform(
                 form.getPlatformKey()
         );
@@ -99,13 +95,13 @@ public class PlayhaviorWorkflowService {
         BanReport savedBanReport =
                 banReportRepository.save(banReport);
 
-        Case playerCase = buildCase(
-                savedPlayer,
+        PlayerCase playerCase = buildCase(
+                player,
                 savedBanReport,
                 form
         );
 
-        Case savedCase =
+        PlayerCase savedCase =
                 caseRepository.save(playerCase);
 
         LearningPathway pathway = buildLearningPathway(
@@ -113,7 +109,8 @@ public class PlayhaviorWorkflowService {
                 mapping,
                 pathwayMode,
                 personalizationLevel,
-                activePolicy
+                activePolicy,
+                platform
         );
 
         return learningPathwayRepository.save(pathway);
@@ -141,6 +138,12 @@ public class PlayhaviorWorkflowService {
 
         banReport.setStated_reason(
                 determineStatedReason(form)
+        );
+
+        banReport.setGameTitle(
+                cleanOptionalText(
+                        form.getGameTitle()
+                )
         );
 
         banReport.setViolationReasonKey(
@@ -199,12 +202,12 @@ public class PlayhaviorWorkflowService {
         return banReport;
     }
 
-    private Case buildCase(
+    private PlayerCase buildCase(
             Player player,
             BanReport banReport,
             ViolationInputForm form
     ) {
-        Case playerCase = new Case();
+        PlayerCase playerCase = new PlayerCase();
 
         playerCase.setDescription(
                 "Accountability case for "
@@ -220,11 +223,12 @@ public class PlayhaviorWorkflowService {
     }
 
     private LearningPathway buildLearningPathway(
-            Case playerCase,
+            PlayerCase playerCase,
             MappingResult mapping,
             PathwayMode pathwayMode,
             PersonalizationLevel personalizationLevel,
-            PlatformPolicy activePolicy
+            PlatformPolicy activePolicy,
+            Platform platform
     ) {
         LearningPathway pathway =
                 new LearningPathway();
@@ -245,13 +249,18 @@ public class PlayhaviorWorkflowService {
                 personalizationLevel
         );
 
-        pathway.setPathway_title(
-                titleFor(mapping.pathway())
-        );
+        String pathwayTitle =
+                titleFor(mapping.pathway());
 
-        pathway.setTotal_modules(
-                moduleCountFor(pathwayMode)
-        );
+        pathway.setPathwayTitle(pathwayTitle);
+
+        modulePlanService
+                .buildPlan(
+                        pathwayMode,
+                        pathwayTitle,
+                        platform.getDisplayName()
+                )
+                .forEach(pathway::addModule);
 
         pathway.setGeneratedAt(
                 LocalDateTime.now()
@@ -377,15 +386,6 @@ public class PlayhaviorWorkflowService {
         };
     }
 
-    private int moduleCountFor(
-            PathwayMode pathwayMode
-    ) {
-        return switch (pathwayMode) {
-            case REINSTATEMENT_SUPPORT -> 3;
-            case EDUCATIONAL_ONLY -> 2;
-        };
-    }
-
     @Transactional
     public SummaryReport completePathway(
             Long pathwayId
@@ -404,7 +404,7 @@ public class PlayhaviorWorkflowService {
 
         summaryReport.setNarrative_text(
                 summaryFor(
-                        pathway.getPathway_title()
+                        pathway.getPathwayTitle()
                 )
         );
 

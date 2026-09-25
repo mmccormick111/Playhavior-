@@ -2,82 +2,11 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org">
 
-<head>
-  <meta charset="UTF-8">
-
-  <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-  <title>Submit Your Notice | Playhavior</title>
-
-
-  <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com">
-
-
-  <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossorigin>
-
-
-  <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-
-
-  th:href="@{/css/playhavior.css}">
-</head>
+<head th:replace="~{fragments/layout :: head('Submit Your Notice')}"></head>
 
 <body>
 
-<header class="site-header">
-  <nav class="nav-shell" aria-label="Main navigation">
-
-    <a th:href="@{/}" class="brand">
-      <span class="brand-icon" aria-hidden="true">🎮</span>
-      <span>PlayHavior</span>
-    </a>
-
-    <div class="nav-links">
-      <a th:href="@{/}">
-        Dashboard
-      </a>
-
-      <a th:href="@{/pathways/current}">
-        My Pathway
-      </a>
-
-      <a
-              th:href="@{/notices/new}"
-              class="active"
-              aria-current="page">
-        Submit Notice
-      </a>
-
-      <a th:href="@{/completion}">
-        Completion
-      </a>
-    </div>
-
-    <div class="nav-account">
-      <button
-              type="button"
-              class="sign-out">
-        Sign out
-      </button>
-
-      <div
-              class="avatar"
-              aria-label="Player initials">
-        JL
-      </div>
-    </div>
-
-  </nav>
-</header>
+<header th:replace="~{fragments/layout :: header('notice')}"></header>
 
 <main class="page-shell">
 
@@ -114,9 +43,9 @@
         </strong>
 
         <ul>
-
-          th:text="${error}">
-          Validation error
+          <li th:each="error : ${#fields.allErrors()}"
+              th:text="${error}">
+            Validation error
           </li>
         </ul>
       </div>
@@ -154,11 +83,36 @@
         </p>
       </div>
 
+      <!-- Game -->
+
+      <div class="form-group">
+        <label for="gameTitle">
+          Game
+          <span class="optional">(optional)</span>
+        </label>
+
+        <input
+                id="gameTitle"
+                type="text"
+                maxlength="150"
+                placeholder="e.g. Fortnite, Call of Duty, Rocket League"
+                th:field="*{gameTitle}"
+                th:errorclass="field-error"
+                aria-describedby="gameTitle-error">
+
+        <p
+                id="gameTitle-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('gameTitle')}"
+                th:errors="*{gameTitle}">
+        </p>
+      </div>
+
       <!-- Violation reason -->
 
       <div class="form-group">
         <label for="violationReasonKey">
-          Reason shown in the notice
+          Category (reason shown in the notice)
         </label>
 
         <p
@@ -548,7 +502,7 @@
 
       <div class="form-group">
         <label for="penaltyType">
-          Penalty type
+          Ban type
         </label>
 
         <select
@@ -558,7 +512,7 @@
                 aria-describedby="penaltyType-error">
 
           <option value="">
-            Select penalty type...
+            Select ban type...
           </option>
 
           <option value="PERMANENT_BAN">
