@@ -6,7 +6,6 @@ import com.playhavior.model.ViolationCategory;
 import com.playhavior.repository.PlatformPolicyRepository;
 import com.playhavior.repository.PolicyRuleRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -26,16 +25,14 @@ public class PlatformPolicyService {
                 policyRuleRepository;
     }
 
-    public PlatformPolicy findActivePolicy(
-            String platformKey
-    ) {
+    public PlatformPolicy findActivePolicy(String platformKey) {
         return platformPolicyRepository
-                .findFirstByPlatformPlatformKeyAndActiveTrueOrderByEffectiveDateDesc(
+                .findFirstByPlatform_PlatformKeyAndActiveTrueOrderByEffectiveDateDesc(
                         platformKey
                 )
                 .orElseThrow(() ->
                         new IllegalArgumentException(
-                                "No active policy was found for "
+                                "No active policy found for platform: "
                                         + platformKey
                         )
                 );
@@ -45,12 +42,21 @@ public class PlatformPolicyService {
             String platformKey,
             ViolationCategory category
     ) {
-        PlatformPolicy policy =
-                findActivePolicy(platformKey);
+        PlatformPolicy policy = findActivePolicy(platformKey);
 
         return policyRuleRepository
-                .findByPlatformPolicyPolicyIdAndViolationCategoryOrderBySectionTitleAsc(
-                        policy.getPolicyId(),
+                .findByPlatformPolicyAndViolationCategoryOrderBySectionTitleAsc(
+                        policy,
+                        category
+                );
+    }
+    public List<PolicyRule> findRulesFor(
+            PlatformPolicy policy,
+            ViolationCategory category
+    ) {
+        return policyRuleRepository
+                .findByPlatformPolicyAndViolationCategoryOrderBySectionTitleAsc(
+                        policy,
                         category
                 );
     }

@@ -1,16 +1,27 @@
 package com.playhavior.service;
 
-import com.playhavior.entity.*;
+import com.playhavior.entity.BanReport;
+import com.playhavior.entity.Case;
+import com.playhavior.entity.LearningPathway;
+import com.playhavior.entity.Platform;
+import com.playhavior.entity.PlatformPolicy;
+import com.playhavior.entity.Player;
+import com.playhavior.entity.SummaryReport;
+import com.playhavior.model.MappingResult;
+import com.playhavior.model.PathwayCode;
+import com.playhavior.model.PathwayMode;
+import com.playhavior.model.PersonalizationLevel;
 import com.playhavior.repository.BanReportRepository;
 import com.playhavior.repository.CaseRepository;
 import com.playhavior.repository.LearningPathwayRepository;
+import com.playhavior.repository.PlatformRepository;
 import com.playhavior.repository.PlayerProfileRepository;
 import com.playhavior.repository.SummaryReportRepository;
+import com.playhavior.web.form.ViolationInputForm;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.playhavior.repository.PlatformRepository;
 
-
+import java.time.LocalDateTime;
 
 @Service
 public class PlayhaviorWorkflowService {
@@ -36,13 +47,11 @@ public class PlayhaviorWorkflowService {
             CategoryMappingService categoryMappingService,
             PenaltyEligibilityService penaltyEligibilityService
     ) {
-
         this.playerProfileRepository = playerProfileRepository;
         this.caseRepository = caseRepository;
         this.banReportRepository = banReportRepository;
         this.learningPathwayRepository = learningPathwayRepository;
         this.summaryReportRepository = summaryReportRepository;
-
         this.platformRepository = platformRepository;
         this.platformPolicyService = platformPolicyService;
         this.categoryMappingService = categoryMappingService;
@@ -51,78 +60,374 @@ public class PlayhaviorWorkflowService {
 
     @Transactional
     public LearningPathway startWorkflow(
-            String displayName,
-            String email,
-            String password,
-            String statedReason,
-            Platform platform) {
+            Player player,
+            ViolationInputForm form
+    ) {
+        Player savedPlayer =
+                playerProfileRepository.save(player);
 
-        Player player = new Player();
-        player.setDisplay_name(displayName);
-        player.setEmail(email);
-        player.setPassword(password);
-        playerProfileRepository.save(player);
+        Platform platform = findPlatform(
+                form.getPlatformKey()
+        );
 
-        Case playerCase = new Case();
-        playerCase.setDescription(statedReason);
-        playerCase.setStatus("Open");
-        caseRepository.save(playerCase);
+        MappingResult mapping =
+                categoryMappingService.mapReason(
+                        form.getViolationReasonKey()
+                );
 
-        BanReport banReport = new BanReport();
-        banReport.setStated_reason(statedReason);
-        banReport.setPlatform(platform);
-        banReportRepository.save(banReport);
+        PathwayMode pathwayMode =
+                penaltyEligibilityService.determineMode(
+                        form.getPenaltyType(),
+                        form.getPenaltyDurationAmount(),
+                        form.getPenaltyDurationUnit()
+                );
 
-        LearningPathway pathway = new LearningPathway();
-        pathway.setPathway_title(pathwayTitleFor(statedReason));
-        pathway.setTotal_modules(moduleCountFor(statedReason));
+        PersonalizationLevel personalizationLevel =
+                determinePersonalization(form);
+
+        PlatformPolicy activePolicy =
+                platformPolicyService.findActivePolicy(
+                        platform.getPlatformKey()
+                );
+
+        BanReport banReport = buildBanReport(
+                form,
+                platform,
+                mapping
+        );
+
+        BanReport savedBanReport =
+                banReportRepository.save(banReport);
+
+        Case playerCase = buildCase(
+                savedPlayer,
+                savedBanReport,
+                form
+        );
+
+        Case savedCase =
+                caseRepository.save(playerCase);
+
+        LearningPathway pathway = buildLearningPathway(
+                savedCase,
+                mapping,
+                pathwayMode,
+                personalizationLevel,
+                activePolicy
+        );
+
         return learningPathwayRepository.save(pathway);
     }
 
+    private Platform findPlatform(String platformKey) {
+        return platformRepository
+                .findByPlatformKey(platformKey)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Unsupported platform selection: "
+                                        + platformKey
+                        )
+                );
+    }
+
+    private BanReport buildBanReport(
+            ViolationInputForm form,
+            Platform platform,
+            MappingResult mapping
+    ) {
+        BanReport banReport = new BanReport();
+
+        banReport.setPlatform(platform);
+
+        banReport.setStated_reason(
+                determineStatedReason(form)
+        );
+
+        banReport.setViolationReasonKey(
+                form.getViolationReasonKey()
+        );
+
+        banReport.setViolationCategory(
+                mapping.category()
+        );
+
+        banReport.setPenaltyType(
+                form.getPenaltyType()
+        );
+
+        banReport.setPenaltyDurationAmount(
+                form.getPenaltyDurationAmount()
+        );
+
+        banReport.setPenaltyDurationUnit(
+                form.getPenaltyDurationUnit()
+        );
+
+        boolean platformProvidedEvidence =
+                Boolean.TRUE.equals(
+                        form.getPlatformProvidedEvidence()
+                );
+
+        banReport.setPlatformProvidedEvidence(
+                platformProvidedEvidence
+        );
+
+        if (platformProvidedEvidence) {
+            banReport.setEvidenceText(
+                    cleanOptionalText(
+                            form.getEvidenceText()
+                    )
+            );
+        } else {
+            banReport.setEvidenceText(null);
+        }
+
+        banReport.setBanIssueDate(
+                form.getBanIssueDate()
+        );
+
+        banReport.setPlatformCaseNumber(
+                cleanOptionalText(
+                        form.getPlatformCaseNumber()
+                )
+        );
+
+        banReport.setSubmittedAt(
+                LocalDateTime.now()
+        );
+
+        return banReport;
+    }
+
+    private Case buildCase(
+            Player player,
+            BanReport banReport,
+            ViolationInputForm form
+    ) {
+        Case playerCase = new Case();
+
+        playerCase.setDescription(
+                "Accountability case for "
+                        + determineStatedReason(form)
+        );
+
+        playerCase.setStatus("Open");
+
+        playerCase.setPlayer(player);
+        playerCase.setBanReport(banReport);
+
+        return playerCase;
+    }
+
+    private LearningPathway buildLearningPathway(
+            Case playerCase,
+            MappingResult mapping,
+            PathwayMode pathwayMode,
+            PersonalizationLevel personalizationLevel,
+            PlatformPolicy activePolicy
+    ) {
+        LearningPathway pathway =
+                new LearningPathway();
+
+        pathway.setViolationCategory(
+                mapping.category()
+        );
+
+        pathway.setPathwayCode(
+                mapping.pathway()
+        );
+
+        pathway.setPathwayMode(
+                pathwayMode
+        );
+
+        pathway.setPersonalizationLevel(
+                personalizationLevel
+        );
+
+        pathway.setPathway_title(
+                titleFor(mapping.pathway())
+        );
+
+        pathway.setTotal_modules(
+                moduleCountFor(pathwayMode)
+        );
+
+        pathway.setGeneratedAt(
+                LocalDateTime.now()
+        );
+
+        if (activePolicy != null) {
+            pathway.setPlatformPolicy(activePolicy);
+        }
+
+        pathway.setPlayerCase(playerCase);
+
+        return pathway;
+    }
+
+    private PersonalizationLevel determinePersonalization(
+            ViolationInputForm form
+    ) {
+        boolean hasUsableEvidence =
+                Boolean.TRUE.equals(
+                        form.getPlatformProvidedEvidence()
+                )
+                        && form.getEvidenceText() != null
+                        && !form.getEvidenceText().isBlank();
+
+        return hasUsableEvidence
+                ? PersonalizationLevel.PERSONALIZED
+                : PersonalizationLevel.GENERIC;
+    }
+
+    private String determineStatedReason(
+            ViolationInputForm form
+    ) {
+        if ("OTHER_PLATFORM_SPECIFIC".equals(
+                form.getViolationReasonKey()
+        )) {
+            String customReason =
+                    cleanOptionalText(
+                            form.getCustomStatedReason()
+                    );
+
+            if (customReason != null) {
+                return customReason;
+            }
+        }
+
+        return makeReasonReadable(
+                form.getViolationReasonKey()
+        );
+    }
+
+    private String makeReasonReadable(
+            String reasonKey
+    ) {
+        if (reasonKey == null || reasonKey.isBlank()) {
+            return "Unspecified conduct violation";
+        }
+
+        String readableReason =
+                reasonKey
+                        .replace('_', ' ')
+                        .toLowerCase();
+
+        return Character.toUpperCase(
+                readableReason.charAt(0)
+        ) + readableReason.substring(1);
+    }
+
+    private String cleanOptionalText(
+            String value
+    ) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return value.trim();
+    }
+
+    private String titleFor(
+            PathwayCode pathwayCode
+    ) {
+        return switch (pathwayCode) {
+            case RESPECTFUL_COMMUNICATION ->
+                    "Respectful Communication";
+
+            case INCLUSION_AND_ANTI_DISCRIMINATION ->
+                    "Inclusion and Anti-Discrimination";
+
+            case THREAT_DEESCALATION ->
+                    "Threat Awareness and De-escalation";
+
+            case SAFE_RESPONSE_TO_SELF_HARM_LANGUAGE ->
+                    "Safe Responses to Self-Harm Language";
+
+            case CONSENT_AND_SEXUAL_BOUNDARIES ->
+                    "Consent and Sexual Boundaries";
+
+            case PRIVACY_AND_PERSONAL_INFORMATION ->
+                    "Privacy and Personal Information";
+
+            case HONEST_IDENTITY_AND_COMMUNICATION ->
+                    "Honest Identity and Communication";
+
+            case RESPONSIBLE_COMMUNICATION_USE ->
+                    "Responsible Communication Use";
+
+            case DIGITAL_SCAM_AND_ACCOUNT_SAFETY ->
+                    "Digital Scam and Account Safety";
+
+            case FAIR_PLAY_AND_GAME_INTEGRITY ->
+                    "Fair Play and Game Integrity";
+
+            case SAFETY_AND_LEGAL_BOUNDARIES ->
+                    "Safety and Legal Boundaries";
+
+            case ACCOUNT_AND_PLATFORM_RESPONSIBILITY ->
+                    "Account and Platform Responsibility";
+
+            case RESPONSIBLE_CONTENT_SHARING ->
+                    "Responsible Content Sharing";
+
+            case COMMUNITY_STANDARDS_FOUNDATION ->
+                    "Community Standards Foundation";
+        };
+    }
+
+    private int moduleCountFor(
+            PathwayMode pathwayMode
+    ) {
+        return switch (pathwayMode) {
+            case REINSTATEMENT_SUPPORT -> 3;
+            case EDUCATIONAL_ONLY -> 2;
+        };
+    }
+
     @Transactional
-    public SummaryReport completePathway(Long pathwayId) {
-        LearningPathway pathway = learningPathwayRepository.findById(pathwayId)
-                .orElseThrow(() -> new IllegalArgumentException("Learning pathway not found"));
+    public SummaryReport completePathway(
+            Long pathwayId
+    ) {
+        LearningPathway pathway =
+                learningPathwayRepository
+                        .findById(pathwayId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Learning pathway not found."
+                                )
+                        );
 
-        SummaryReport summaryReport = new SummaryReport();
-        summaryReport.setNarrative_text(summaryFor(pathway.getPathway_title()));
-        summaryReport.setVerification_code((int) (100000 + Math.random() * 900000));
+        SummaryReport summaryReport =
+                new SummaryReport();
 
-        return summaryReportRepository.save(summaryReport);
+        summaryReport.setNarrative_text(
+                summaryFor(
+                        pathway.getPathway_title()
+                )
+        );
+
+        summaryReport.setVerification_code(
+                (int) (
+                        100000
+                                + Math.random()
+                                * 900000
+                )
+        );
+
+        return summaryReportRepository.save(
+                summaryReport
+        );
     }
 
-    private String pathwayTitleFor(String statedReason) {
-        return switch (statedReason) {
-            case "Harassment or abusive chat" ->
-                    "Respectful Communication Module";
-
-            case "Hate speech or discriminatory language" ->
-                    "Inclusive Gaming and Community Respect Module";
-
-            case "Griefing or intentional disruption" ->
-                    "Teamplay, Fair Competition, and Sportsmanship Module";
-
-            case "Cheating or exploiting game systems" ->
-                    "Competitive Integrity and Fair Play Module";
-
-            default ->
-                    "Responsible Gaming Conduct Module";
-        };
-    }
-
-    private int moduleCountFor(String statedReason) {
-        return switch (statedReason) {
-            case "Hate speech or discriminatory language" -> 3;
-            case "Cheating or exploiting game systems" -> 3;
-            case "Harassment or abusive chat" -> 2;
-            case "Griefing or intentional disruption" -> 2;
-            default -> 1;
-        };
-    }
-
-    private String summaryFor(String pathwayTitle) {
-        return "The player completed the " + pathwayTitle
-                + ". The player reviewed accountability, respectful conduct, "
-                + "and the expected standards for re-entry into the gaming community.";
+    private String summaryFor(
+            String pathwayTitle
+    ) {
+        return "The player completed the "
+                + pathwayTitle
+                + ". The player reviewed accountability, "
+                + "the impact of their conduct, and the "
+                + "platform standards relevant to the case.";
     }
 }

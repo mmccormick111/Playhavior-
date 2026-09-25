@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1">
+
+  <title>Your Pathway | PlayHavior</title>
+
+
+  th:href="@{/css/playhavior.css}">
+</head>
+
+<body>
+
+<header class="site-header">
+  <nav class="nav-shell">
+
+    <a th:href="@{/}" class="brand">
+      <span class="brand-icon">🎮</span>
+      <span>PlayHavior</span>
+    </a>
+
+    <div class="nav-links">
+      <a th:href="@{/}">Dashboard</a>
+
+      <a class="active"
+         th:href="@{/pathways/{id}(id=${pathway.pathway_ID})}">
+        My Pathway
+      </a>
+
+      <a th:href="@{/notices/new}">
+        Submit Notice
+      </a>
+
+      <a th:href="@{/completion}">
+        Completion
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="page-introduction">
+    <p class="step-label">STEP 2 OF 2</p>
+
+    <h1>Your Learning Pathway</h1>
+
+    <p>
+      PlayHavior created this pathway from the reason
+      supplied in your platform notice.
+    </p>
+  </section>
+
+  <section class="form-card">
+
+    <h2 th:text="${pathway.pathway_title}">
+      Pathway title
+    </h2>
+
+    <p>
+      <strong>Category:</strong>
+
+      <span
+              th:text="${pathway.violationCategory}">
+            </span>
+    </p>
+
+    <p>
+      <strong>Pathway type:</strong>
+
+      <span
+              th:text="${pathway.pathwayMode}">
+            </span>
+    </p>
+
+    <p>
+      <strong>Personalization:</strong>
+
+      <span
+              th:text="${pathway.personalizationLevel}">
+            </span>
+    </p>
+
+    <p>
+      <strong>Modules assigned:</strong>
+
+      <span
+              th:text="${pathway.total_modules}">
+            </span>
+    </p>
+
+    <section th:if="${!#lists.isEmpty(policyRules)}">
+
+      <h2>Relevant Platform Standards</h2>
+
+      <article
+              class="notice-box"
+              th:each="rule : ${policyRules}">
+
+        <h3 th:text="${rule.sectionTitle}">
+          Policy section
+        </h3>
+
+        <p th:text="${rule.ruleSummary}">
+          Rule summary
+        </p>
+
+        <p th:if="${rule.sectionReference != null}">
+          <strong>Section:</strong>
+
+          <span
+                  th:text="${rule.sectionReference}">
+                    </span>
+        </p>
+
+        <a
+                th:href="${pathway.platformPolicy.sourceUrl}"
+                target="_blank"
+                rel="noopener noreferrer">
+
+          View the official platform policy
+        </a>
+      </article>
+
+    </section>
+
+    <section th:if="${#lists.isEmpty(policyRules)}">
+      <div class="notice-box">
+        No category-specific policy reference has been
+        loaded for this platform yet. The educational
+        pathway can still be used, but policy research
+        should be added before the final prototype.
+      </div>
+    </section>
+
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+  <title>Submit Your Notice | Playhavior</title>
+
+
+  <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+
+  <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+
+  <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+
+
+  th:href="@{/css/playhavior.css}">
+</head>
+
+<body>
+
+<header class="site-header">
+  <nav class="nav-shell" aria-label="Main navigation">
+
+    <a th:href="@{/}" class="brand">
+      <span class="brand-icon" aria-hidden="true">🎮</span>
+      <span>PlayHavior</span>
+    </a>
+
+    <div class="nav-links">
+      <a th:href="@{/}">
+        Dashboard
+      </a>
+
+      <a th:href="@{/pathways/current}">
+        My Pathway
+      </a>
+
+      <a
+              th:href="@{/notices/new}"
+              class="active"
+              aria-current="page">
+        Submit Notice
+      </a>
+
+      <a th:href="@{/completion}">
+        Completion
+      </a>
+    </div>
+
+    <div class="nav-account">
+      <button
+              type="button"
+              class="sign-out">
+        Sign out
+      </button>
+
+      <div
+              class="avatar"
+              aria-label="Player initials">
+        JL
+      </div>
+    </div>
+
+  </nav>
+</header>
+
+<main class="page-shell">
+
+  <section class="page-introduction">
+    <p class="step-label">
+      STEP 1 OF 2
+    </p>
+
+    <h1>Submit Your Notice</h1>
+
+    <p>
+      You’re taking a positive next step. This information
+      helps PlayHavior build the right learning pathway for you.
+    </p>
+  </section>
+
+  <section class="form-card">
+
+    <h2>About the Notice</h2>
+
+    <form
+            th:action="@{/notices}"
+            th:object="${violationForm}"
+            method="post">
+
+      <div
+              class="error-summary"
+              th:if="${#fields.hasErrors('*')}"
+              role="alert"
+              aria-live="polite">
+
+        <strong>
+          Please correct the highlighted fields.
+        </strong>
+
+        <ul>
+
+          th:text="${error}">
+          Validation error
+          </li>
+        </ul>
+      </div>
+
+      <!-- Platform -->
+
+      <div class="form-group">
+        <label for="platformKey">
+          Platform
+        </label>
+
+        <select
+                id="platformKey"
+                th:field="*{platformKey}"
+                th:errorclass="field-error"
+                aria-describedby="platformKey-error">
+
+          <option value="">
+            Select platform...
+          </option>
+
+          <option
+                  th:each="platform : ${platforms}"
+                  th:value="${platform.platformKey}"
+                  th:text="${platform.displayName}">
+            Platform
+          </option>
+        </select>
+
+        <p
+                id="platformKey-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('platformKey')}"
+                th:errors="*{platformKey}">
+        </p>
+      </div>
+
+      <!-- Violation reason -->
+
+      <div class="form-group">
+        <label for="violationReasonKey">
+          Reason shown in the notice
+        </label>
+
+        <p
+                id="violationReasonHelp"
+                class="field-help">
+          Select the closest reason stated by the platform.
+          PlayHavior will assign the internal category.
+        </p>
+
+        <select
+                id="violationReasonKey"
+                th:field="*{violationReasonKey}"
+                th:errorclass="field-error"
+                aria-describedby="violationReasonHelp violationReasonKey-error">
+
+          <option value="">
+            Select the closest reason...
+          </option>
+
+          <optgroup label="Harassment / Bullying">
+            <option value="PERSONAL_INSULTS">
+              Personal insults
+            </option>
+
+            <option value="TARGETED_HARASSMENT">
+              Targeted harassment
+            </option>
+
+            <option value="BULLYING_HUMILIATION">
+              Bullying or humiliation
+            </option>
+
+            <option value="NONVIOLENT_INTIMIDATION">
+              Non-violent intimidation
+            </option>
+
+            <option value="PERSISTENT_UNWANTED_CONTACT">
+              Persistent unwanted contact
+            </option>
+
+            <option value="GRIEFING">
+              Griefing or intentional disruption
+            </option>
+          </optgroup>
+
+          <optgroup label="Hate / Discrimination">
+            <option value="RACIAL_ETHNIC_DISCRIMINATION">
+              Racial or ethnic discrimination
+            </option>
+
+            <option value="SEXUAL_ORIENTATION_DISCRIMINATION">
+              Sexual-orientation discrimination
+            </option>
+
+            <option value="GENDER_IDENTITY_DISCRIMINATION">
+              Gender or gender-identity discrimination
+            </option>
+
+            <option value="RELIGIOUS_DISCRIMINATION">
+              Religious discrimination
+            </option>
+
+            <option value="DISABILITY_DISCRIMINATION">
+              Disability-based discrimination
+            </option>
+
+            <option value="AGE_DISCRIMINATION">
+              Age-based discrimination
+            </option>
+
+            <option value="OTHER_PROTECTED_CHARACTERISTIC">
+              Other protected-characteristic targeting
+            </option>
+          </optgroup>
+
+          <optgroup label="Threats / Violent Intimidation">
+            <option value="DIRECT_THREAT">
+              Direct threat
+            </option>
+
+            <option value="IMPLIED_THREAT">
+              Indirect or implied threat
+            </option>
+
+            <option value="GROUP_THREAT">
+              Threat to a group
+            </option>
+
+            <option value="REAL_WORLD_RETALIATION">
+              Threatening real-world retaliation
+            </option>
+
+            <option value="VIOLENT_INTIMIDATION">
+              Violent intimidation
+            </option>
+          </optgroup>
+
+          <optgroup label="Self-Harm / Suicide Encouragement">
+            <option value="SUICIDE_ENCOURAGEMENT">
+              Suicide encouragement
+            </option>
+
+            <option value="SELF_HARM_ENCOURAGEMENT">
+              Self-harm encouragement
+            </option>
+
+            <option value="HARM_WISHING_KYS">
+              Telling someone to harm or kill themselves
+            </option>
+
+            <option value="PROMOTION_OF_HARMFUL_BEHAVIOR">
+              Promotion of harmful behavior
+            </option>
+          </optgroup>
+
+          <optgroup label="Sexual Harassment / Sexual Content">
+            <option value="UNWANTED_SEXUAL_PROPOSITION">
+              Unwanted sexual proposition
+            </option>
+
+            <option value="SEXUAL_HARASSMENT">
+              Sexual harassment
+            </option>
+
+            <option value="SEXUALIZED_INSULT">
+              Sexualized insult
+            </option>
+
+            <option value="EXPLICIT_SEXUAL_MESSAGE">
+              Explicit sexual message
+            </option>
+
+            <option value="NONCONSENSUAL_SEXUAL_CONTENT">
+              Non-consensual sexual content
+            </option>
+          </optgroup>
+
+          <optgroup label="Privacy / Doxxing">
+            <option value="REAL_NAME_ADDRESS_EXPOSURE">
+              Real name or address exposure
+            </option>
+
+            <option value="PHONE_EMAIL_EXPOSURE">
+              Phone number or email exposure
+            </option>
+
+            <option value="SOCIAL_ACCOUNT_EXPOSURE">
+              Social-media or account exposure
+            </option>
+
+            <option value="LOCATION_EXPOSURE">
+              Location exposure
+            </option>
+
+            <option value="THREAT_TO_DOX">
+              Threat to expose private information
+            </option>
+
+            <option value="SHARING_PRIVATE_MEDIA">
+              Sharing private media
+            </option>
+          </optgroup>
+
+          <optgroup label="Impersonation / Deception">
+            <option value="PLAYER_IMPERSONATION">
+              Player impersonation
+            </option>
+
+            <option value="CREATOR_IMPERSONATION">
+              Streamer or creator impersonation
+            </option>
+
+            <option value="EMPLOYEE_MODERATOR_IMPERSONATION">
+              Employee or moderator impersonation
+            </option>
+
+            <option value="DECEPTIVE_IDENTITY_CLAIMS">
+              Deceptive identity claims
+            </option>
+
+            <option value="FALSE_ATTRIBUTION">
+              False attribution
+            </option>
+          </optgroup>
+
+          <optgroup label="Spam / Communication Abuse">
+            <option value="REPEATED_MESSAGES">
+              Repeated messages
+            </option>
+
+            <option value="MESSAGE_FLOODING">
+              Message flooding
+            </option>
+
+            <option value="REPEATED_INVITES">
+              Repeated invites
+            </option>
+
+            <option value="OFF_TOPIC_FLOODING">
+              Off-topic flooding
+            </option>
+
+            <option value="VOICE_CHANNEL_DISRUPTION">
+              Voice-channel disruption
+            </option>
+          </optgroup>
+
+          <optgroup label="Scams / Fraud / Phishing">
+            <option value="CREDENTIAL_PHISHING">
+              Credential phishing
+            </option>
+
+            <option value="ACCOUNT_THEFT_ATTEMPT">
+              Account-theft attempt
+            </option>
+
+            <option value="FAKE_REWARD_CURRENCY_OFFER">
+              Fake reward or currency offer
+            </option>
+
+            <option value="FRAUDULENT_TRADE">
+              Fraudulent trade
+            </option>
+
+            <option value="ACCOUNT_SALE_SCAM">
+              Account-sale scam
+            </option>
+
+            <option value="FINANCIAL_DECEPTION">
+              Financial deception
+            </option>
+          </optgroup>
+
+          <optgroup label="Cheating / Exploits / Unfair Play">
+            <option value="CHEAT_PROMOTION">
+              Cheat promotion
+            </option>
+
+            <option value="HACK_EXPLOIT_PROMOTION">
+              Hack or exploit promotion
+            </option>
+
+            <option value="BOTTING_SCRIPTING">
+              Botting or scripting
+            </option>
+
+            <option value="RANK_MANIPULATION">
+              Rank manipulation
+            </option>
+
+            <option value="MATCH_FIXING_WIN_TRADING">
+              Match fixing or win trading
+            </option>
+
+            <option value="EXPLOIT_ABUSE">
+              Exploit abuse
+            </option>
+          </optgroup>
+
+          <optgroup label="Illegal / Dangerous Activity">
+            <option value="ILLEGAL_ACTIVITY_PROMOTION">
+              Illegal activity promotion
+            </option>
+
+            <option value="VIOLENCE_INCITEMENT">
+              Violence incitement
+            </option>
+
+            <option value="DANGEROUS_ACTIVITY_ENCOURAGEMENT">
+              Dangerous activity encouragement
+            </option>
+
+            <option value="TERRORIST_EXTREMIST_ACTIVITY">
+              Terrorist or extremist activity
+            </option>
+
+            <option value="HUMAN_TRAFFICKING_EXPLOITATION">
+              Human trafficking or exploitation
+            </option>
+          </optgroup>
+
+          <optgroup label="Account / Platform Abuse">
+            <option value="ACCOUNT_SHARING">
+              Account sharing
+            </option>
+
+            <option value="ACCOUNT_BUYING_SELLING">
+              Account buying or selling
+            </option>
+
+            <option value="BAN_EVASION">
+              Ban or enforcement evasion
+            </option>
+
+            <option value="UNAUTHORIZED_ACCOUNT_ACCESS">
+              Unauthorized account access
+            </option>
+
+            <option value="PLATFORM_ABUSE">
+              Platform abuse
+            </option>
+          </optgroup>
+
+          <optgroup label="Inappropriate / Explicit Content">
+            <option value="PORNOGRAPHIC_EXPLICIT_CONTENT">
+              Pornographic or explicit content
+            </option>
+
+            <option value="GRAPHIC_REAL_WORLD_VIOLENCE">
+              Graphic real-world violence
+            </option>
+
+            <option value="EXPLICIT_PROFILE_MEDIA">
+              Sexually explicit profile or media content
+            </option>
+
+            <option value="PROHIBITED_IMAGERY">
+              Prohibited imagery
+            </option>
+          </optgroup>
+
+          <optgroup label="Other / Unspecified">
+            <option value="SPOILERS_LEAKS">
+              Spoilers or leaks
+            </option>
+
+            <option value="INTELLECTUAL_PROPERTY_MISUSE">
+              Intellectual-property misuse
+            </option>
+
+            <option value="PLATFORM_SPECIFIC_CONDUCT">
+              Platform-specific conduct
+            </option>
+
+            <option value="UNSPECIFIED_CONDUCT">
+              The notice did not state a specific reason
+            </option>
+
+            <option value="OTHER_PLATFORM_SPECIFIC">
+              Other or platform-specific reason
+            </option>
+          </optgroup>
+        </select>
+
+        <p
+                id="violationReasonKey-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('violationReasonKey')}"
+                th:errors="*{violationReasonKey}">
+        </p>
+      </div>
+
+      <!-- Custom reason -->
+
+      <div
+              id="custom-reason-group"
+              class="form-group conditional-field">
+
+        <label for="customStatedReason">
+          Reason written by the platform
+        </label>
+
+        <p
+                id="customReasonHelp"
+                class="field-help">
+          Enter the reason as closely as possible to how it
+          appeared in the platform notice.
+        </p>
+
+        <input
+                id="customStatedReason"
+                type="text"
+                maxlength="500"
+                th:field="*{customStatedReason}"
+                th:errorclass="field-error"
+                aria-describedby="customReasonHelp customStatedReason-error">
+
+        <p
+                id="customStatedReason-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('customStatedReason')}"
+                th:errors="*{customStatedReason}">
+        </p>
+      </div>
+
+      <!-- Penalty type -->
+
+      <div class="form-group">
+        <label for="penaltyType">
+          Penalty type
+        </label>
+
+        <select
+                id="penaltyType"
+                th:field="*{penaltyType}"
+                th:errorclass="field-error"
+                aria-describedby="penaltyType-error">
+
+          <option value="">
+            Select penalty type...
+          </option>
+
+          <option value="PERMANENT_BAN">
+            Permanent ban
+          </option>
+
+          <option value="TEMPORARY_BAN">
+            Temporary ban
+          </option>
+
+          <option value="ACCOUNT_SUSPENSION">
+            Account suspension
+          </option>
+
+          <option value="COMMUNICATION_RESTRICTION">
+            Communication restriction
+          </option>
+
+          <option value="WARNING">
+            Warning
+          </option>
+
+          <option value="OTHER">
+            Other
+          </option>
+        </select>
+
+        <p
+                id="penaltyType-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('penaltyType')}"
+                th:errors="*{penaltyType}">
+        </p>
+      </div>
+
+      <!-- Penalty duration -->
+
+      <div
+              id="duration-fields"
+              class="form-grid conditional-field">
+
+        <div class="form-group">
+          <label for="penaltyDurationAmount">
+            Penalty length
+          </label>
+
+          <input
+                  id="penaltyDurationAmount"
+                  type="number"
+                  min="1"
+                  step="1"
+                  th:field="*{penaltyDurationAmount}"
+                  th:errorclass="field-error"
+                  aria-describedby="penaltyDurationAmount-error">
+
+          <p
+                  id="penaltyDurationAmount-error"
+                  class="validation-message"
+                  th:if="${#fields.hasErrors('penaltyDurationAmount')}"
+                  th:errors="*{penaltyDurationAmount}">
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="penaltyDurationUnit">
+            Unit
+          </label>
+
+          <select
+                  id="penaltyDurationUnit"
+                  th:field="*{penaltyDurationUnit}"
+                  th:errorclass="field-error"
+                  aria-describedby="penaltyDurationUnit-error">
+
+            <option value="">
+              Select unit...
+            </option>
+
+            <option value="HOURS">
+              Hours
+            </option>
+
+            <option value="DAYS">
+              Days
+            </option>
+
+            <option value="WEEKS">
+              Weeks
+            </option>
+          </select>
+
+          <p
+                  id="penaltyDurationUnit-error"
+                  class="validation-message"
+                  th:if="${#fields.hasErrors('penaltyDurationUnit')}"
+                  th:errors="*{penaltyDurationUnit}">
+          </p>
+        </div>
+      </div>
+
+      <!-- Date -->
+
+      <div class="form-group">
+        <label for="banIssueDate">
+          Date of notice
+        </label>
+
+        <input
+                id="banIssueDate"
+                type="date"
+                th:field="*{banIssueDate}"
+                th:errorclass="field-error"
+                aria-describedby="banIssueDate-error">
+
+        <p
+                id="banIssueDate-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('banIssueDate')}"
+                th:errors="*{banIssueDate}">
+        </p>
+      </div>
+
+      <!-- Evidence question -->
+
+      <fieldset class="form-group">
+        <legend>
+          Did the platform provide evidence?
+        </legend>
+
+        <p
+                id="evidenceQuestionHelp"
+                class="field-help">
+          This means the notice displayed the message,
+          content, or action connected to the violation.
+        </p>
+
+        <div
+                class="radio-row"
+                aria-describedby="evidenceQuestionHelp platformProvidedEvidence-error">
+
+          <label class="radio-option">
+            <input
+                    id="evidenceYes"
+                    type="radio"
+                    value="true"
+                    th:field="*{platformProvidedEvidence}">
+
+            <span>Yes</span>
+          </label>
+
+          <label class="radio-option">
+            <input
+                    id="evidenceNo"
+                    type="radio"
+                    value="false"
+                    th:field="*{platformProvidedEvidence}">
+
+            <span>No</span>
+          </label>
+        </div>
+
+        <p
+                id="platformProvidedEvidence-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('platformProvidedEvidence')}"
+                th:errors="*{platformProvidedEvidence}">
+        </p>
+      </fieldset>
+
+      <!-- Evidence text -->
+
+      <div
+              id="evidence-group"
+              class="form-group conditional-field">
+
+        <label for="evidenceText">
+          Evidence shown in the notice
+        </label>
+
+        <textarea
+                id="evidenceText"
+                rows="6"
+                maxlength="5000"
+                th:field="*{evidenceText}"
+                th:errorclass="field-error"
+                aria-describedby="evidenceHelp evidenceText-error"></textarea>
+
+        <p
+                id="evidenceHelp"
+                class="field-help">
+          Paste only the evidence shown by the platform.
+          Remove passwords, addresses, phone numbers,
+          credentials, and unrelated private information.
+        </p>
+
+        <p
+                id="evidenceText-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('evidenceText')}"
+                th:errors="*{evidenceText}">
+        </p>
+      </div>
+
+      <!-- Case number -->
+
+      <div class="form-group">
+        <label for="platformCaseNumber">
+          Platform case or reference number
+          <span class="optional">(optional)</span>
+        </label>
+
+        <input
+                id="platformCaseNumber"
+                type="text"
+                maxlength="100"
+                th:field="*{platformCaseNumber}"
+                th:errorclass="field-error"
+                aria-describedby="caseNumberHelp platformCaseNumber-error">
+
+        <p
+                id="caseNumberHelp"
+                class="field-help">
+          Enter the reference, enforcement, or case number
+          shown in the notice, if one was provided.
+        </p>
+
+        <p
+                id="platformCaseNumber-error"
+                class="validation-message"
+                th:if="${#fields.hasErrors('platformCaseNumber')}"
+                th:errors="*{platformCaseNumber}">
+        </p>
+      </div>
+
+      <!-- Acknowledgements -->
+
+      <div class="notice-box">
+        <p>
+          Enter the information as it appears in your notice.
+          Providing inaccurate information can make your
+          completion report unreliable.
+        </p>
+
+        <label class="checkbox-option">
+          <input
+                  id="accuracyAcknowledged"
+                  type="checkbox"
+                  th:field="*{accuracyAcknowledged}">
+
+          <span>
+                        I confirm that the information I entered is
+                        accurate to the best of my knowledge.
+                    </span>
+        </label>
+
+        <p
+                class="validation-message"
+                th:if="${#fields.hasErrors('accuracyAcknowledged')}"
+                th:errors="*{accuracyAcknowledged}">
+        </p>
+
+        <label class="checkbox-option">
+          <input
+                  id="limitationAcknowledged"
+                  type="checkbox"
+                  th:field="*{limitationAcknowledged}">
+
+          <span>
+                        I understand that completing PlayHavior does
+                        not guarantee that the platform will reduce
+                        or reverse its decision.
+                    </span>
+        </label>
+
+        <p
+                class="validation-message"
+                th:if="${#fields.hasErrors('limitationAcknowledged')}"
+                th:errors="*{limitationAcknowledged}">
+        </p>
+      </div>
+
+      <!-- Actions -->
+
+      <div class="form-actions">
+        <a
+                th:href="@{/}"
+                class="secondary-button">
+          Cancel
+        </a>
+
+        <button
+                type="submit"
+                class="primary-button">
+          Generate My Pathway
+        </button>
+      </div>
+
+    </form>
+  </section>
+</main>
+
+<script th:src="@{/js/violation-intake.js}"></script>
+
+</body>
+</html>

@@ -5,34 +5,36 @@ import com.playhavior.repository.PlatformRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 @Configuration
 public class ReferenceDataConfiguration {
 
     @Bean
-    CommandLineRunner loadPlatformReferenceData(
+    @Order(1)
+    CommandLineRunner loadSupportedPlatforms(
             PlatformRepository platformRepository
     ) {
         return args -> {
-            createPlatformIfMissing(
+            addPlatform(
                     platformRepository,
                     "STEAM",
                     "Steam"
             );
 
-            createPlatformIfMissing(
+            addPlatform(
                     platformRepository,
                     "PLAYSTATION_NETWORK",
                     "PlayStation Network"
             );
 
-            createPlatformIfMissing(
+            addPlatform(
                     platformRepository,
                     "XBOX",
                     "Xbox"
             );
 
-            createPlatformIfMissing(
+            addPlatform(
                     platformRepository,
                     "EPIC_GAMES",
                     "Epic Games"
@@ -40,17 +42,17 @@ public class ReferenceDataConfiguration {
         };
     }
 
-    private void createPlatformIfMissing(
+    private void addPlatform(
             PlatformRepository repository,
-            String platformKey,
+            String key,
             String displayName
     ) {
-        if (repository.existsByPlatformKey(platformKey)) {
+        if (repository.findByPlatformKey(key).isPresent()) {
             return;
         }
 
         Platform platform = new Platform();
-        platform.setPlatformKey(platformKey);
+        platform.setPlatformKey(key);
         platform.setDisplayName(displayName);
         platform.setActive(true);
 
