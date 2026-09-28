@@ -5,6 +5,16 @@ import com.playhavior.web.form.ViolationInputForm;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 
+/**
+ * Checks the rules that involve MORE THAN ONE field (service layer).
+ *
+ * FLOW: step 3.  CALLED BY: ViolationIntakeController.submitForm()
+ * CALLS: CategoryMappingService.isRecognizedReason()
+ * WHY not only annotations: @NotNull can say "required",
+ *     but not "required IF the ban is temporary".
+ * Q: What if someone bypasses the JavaScript? These rules run on the server anyway.
+ * NOTE: @Component and @Service both create a bean; @Component is the general form.
+ */
 @Component
 public class ViolationInputValidator {
 
@@ -16,6 +26,8 @@ public class ViolationInputValidator {
         this.categoryMappingService = categoryMappingService;
     }
 
+    // Runs all three checks. Errors is the controller's BindingResult, so these
+    // messages show on the page exactly like the annotation errors.
     public void validate(
             ViolationInputForm form,
             Errors errors
@@ -25,6 +37,8 @@ public class ViolationInputValidator {
         validateEvidence(form, errors);
     }
 
+    // Temporary ban / suspension / communication restriction -> length + unit required.
+    // Anything else -> both cleared, so a permanent ban never stores a stray "3 days".
     private void validatePenaltyDuration(
             ViolationInputForm form,
             Errors errors
@@ -40,6 +54,7 @@ public class ViolationInputValidator {
             return;
         }
 
+        // rejectValue attaches a message to one field; th:errors shows it under that input
         if (form.getPenaltyDurationAmount() == null) {
             errors.rejectValue(
                     "penaltyDurationAmount",
@@ -57,6 +72,8 @@ public class ViolationInputValidator {
         }
     }
 
+    // Unknown reason key -> error (catches tampered dropdown values).
+    // "Other" without the platform's own wording -> error.
     private void validateViolationReason(
             ViolationInputForm form,
             Errors errors
@@ -88,6 +105,7 @@ public class ViolationInputValidator {
         }
     }
 
+    // "Yes" with no evidence text -> error. "No" -> any text is cleared.
     private void validateEvidence(
             ViolationInputForm form,
             Errors errors

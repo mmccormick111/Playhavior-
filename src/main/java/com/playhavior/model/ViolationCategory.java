@@ -1,5 +1,10 @@
 package com.playhavior.model;
 
+/**
+ * The 14 broad violation groups (the internal vocabulary).
+ * CategoryMappingService maps each dropdown reason to one of these; the policy CSV
+ * and PolicyRule use them to match rules. Names must match the CSV column exactly.
+ */
 public enum ViolationCategory {
     HARASSMENT_BULLYING,
     HATE_DISCRIMINATION,

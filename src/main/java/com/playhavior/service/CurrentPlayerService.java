@@ -4,6 +4,15 @@ import com.playhavior.entity.Player;
 import com.playhavior.repository.PlayerProfileRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Answers "which player is using the app right now?" (service layer).
+ *
+ * CALLED BY: ViolationIntakeController.submitForm() (FLOW step 3).
+ * TEMPORARY: returns the demo player seeded by ReferenceDataConfiguration.
+ * WHY a separate class: it is the ONE place to change when login exists;
+ *     every controller that asks for the current player keeps working.
+ * TODO: return the signed-in player once Spring Security login is built.
+ */
 @Service
 public class CurrentPlayerService {
 

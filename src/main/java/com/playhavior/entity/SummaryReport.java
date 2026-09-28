@@ -6,6 +6,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+/**
+ * The future completion report the player attaches to an appeal (table: summary_reports).
+ * CREATED BY: PlayhaviorWorkflowService.completePathway(), which nothing calls yet.
+ * TODO: link to LearningPathway (and its platform reference code) for the Completion page.
+ */
 @Entity
 @Table(name = "summary_reports")
 public class SummaryReport {
@@ -14,10 +19,12 @@ public class SummaryReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long summary_id;
 
+    // TODO: make these fields private; public skips the getters/setters
     public String narrative_text;
     public int verification_code;
 
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public SummaryReport() {
     }
 

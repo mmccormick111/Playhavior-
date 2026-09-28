@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  Shared head + nav bar. Pages include them with th:replace.
+  WHY: one copy of the stylesheet link and header (the original unstyled-page bug
+       came from each page having its own broken copy).
+*/-->
 
 <!-- Shared <head>: pass the page title in, e.g.
      th:replace="~{fragments/layout :: head('Submit Your Notice')}" -->
@@ -30,6 +35,7 @@
 
     <div class="nav-links">
       <!-- Dashboard and Completion pages are not built yet. -->
+      <!--/* TODO: turn these spans into links once the pages exist */-->
       <span class="nav-disabled" title="Coming soon">Dashboard</span>
 
       <a th:href="@{/pathways/latest}"
@@ -51,6 +57,7 @@
       <button type="button" class="sign-out" disabled title="Login is not built yet">
         Sign out
       </button>
+      <!--/* TODO: show the signed-in player's initials instead of the demo "JL" */-->
       <div class="avatar" aria-label="Demo player">JL</div>
     </div>
 

@@ -8,12 +8,25 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
+/**
+ * Decides the pathway MODE from the ban type and length (service layer).
+ *
+ * FLOW: step 4.  CALLED BY: PlayhaviorWorkflowService.startWorkflow()
+ * RULES (in order):
+ *   1. PERMANENT_BAN                                     -> REINSTATEMENT_SUPPORT
+ *   2. TEMPORARY_BAN / ACCOUNT_SUSPENSION >= 7 days      -> REINSTATEMENT_SUPPORT
+ *   3. anything else (shorter bans, restrictions, ...)   -> EDUCATIONAL_ONLY
+ * RESULT: REINSTATEMENT_SUPPORT gets 5 modules, EDUCATIONAL_ONLY gets 3 (ModulePlanService).
+ * WHY the 7 lives in application.properties: a business rule you can tune
+ *     without changing code.
+ */
 @Service
 public class PenaltyEligibilityService {
 
     private final long minimumReviewDays;
 
     public PenaltyEligibilityService(
+            // Reads playhavior.minimum-review-days; ":7" = default if the property is missing
             @Value("${playhavior.minimum-review-days:7}")
             long minimumReviewDays
     ) {
@@ -25,10 +38,12 @@ public class PenaltyEligibilityService {
             Integer durationAmount,
             DurationUnit durationUnit
     ) {
+        // Rule 1
         if (penaltyType == PenaltyType.PERMANENT_BAN) {
             return PathwayMode.REINSTATEMENT_SUPPORT;
         }
 
+        // Rule 2 (the validator has already made sure a duration exists)
         if (penaltyType == PenaltyType.TEMPORARY_BAN
                 || penaltyType == PenaltyType.ACCOUNT_SUSPENSION) {
 
@@ -50,9 +65,13 @@ public class PenaltyEligibilityService {
             }
         }
 
+        // Rule 3
         return PathwayMode.EDUCATIONAL_ONLY;
     }
 
+    // 2 WEEKS -> Duration of 14 days.
+    // WHY: lengths can only be compared once they share a unit.
+    // WHY 7L: long arithmetic, so a large number cannot overflow.
     private Duration convertDuration(
             int amount,
             DurationUnit unit

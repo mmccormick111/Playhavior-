@@ -13,6 +13,14 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * One version of a platform's code of conduct (table: platform_policies).
+ * RELATIONSHIPS: many policies -> one Platform (@ManyToOne, platform_id);
+ *                one policy has many PolicyRules (they point here with policy_id).
+ * CREATED BY: PlatformPolicyCsvImporter at startup (FLOW step 0).
+ * WHY versions + active: policies change over time; a pathway keeps citing
+ *     the version it was built from.
+ */
 @Entity
 @Table(name = "platform_policies")
 public class PlatformPolicy {
@@ -43,6 +51,7 @@ public class PlatformPolicy {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public PlatformPolicy() {
     }
 

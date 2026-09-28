@@ -8,6 +8,13 @@ import com.playhavior.repository.PolicyRuleRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+/**
+ * Finds a platform's current policy and its rules for a category (service layer).
+ *
+ * CALLED BY: PlayhaviorWorkflowService (findActivePolicy, FLOW step 4),
+ *            LearningPathwayController (findRulesFor, FLOW step 7).
+ * NOTE: the two findRulesFor methods are OVERLOADING: same name, different parameters.
+ */
 @Service
 public class PlatformPolicyService {
 
@@ -25,6 +32,7 @@ public class PlatformPolicyService {
                 policyRuleRepository;
     }
 
+    // Newest active policy for a platform key, or an exception if none was imported
     public PlatformPolicy findActivePolicy(String platformKey) {
         return platformPolicyRepository
                 .findFirstByPlatform_PlatformKeyAndActiveTrueOrderByEffectiveDateDesc(
@@ -38,6 +46,7 @@ public class PlatformPolicyService {
                 );
     }
 
+    // Version 1: starts from a platform key and looks the policy up first
     public List<PolicyRule> findRulesFor(
             String platformKey,
             ViolationCategory category
@@ -50,6 +59,7 @@ public class PlatformPolicyService {
                         category
                 );
     }
+    // Version 2: starts from a policy (the pathway already stores its policy)
     public List<PolicyRule> findRulesFor(
             PlatformPolicy policy,
             ViolationCategory category

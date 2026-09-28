@@ -17,6 +17,10 @@ import jakarta.persistence.Table;
  * One module inside a generated learning pathway.
  * Titles and lesson counts are placeholders for now; lesson
  * content and the closing scenario will be added later.
+ *
+ * TABLE: pathway_modules.
+ * RELATIONSHIP: many modules -> one LearningPathway (@ManyToOne, owns pathway_id).
+ * CREATED BY: ModulePlanService.buildPlan(); saved through LearningPathway's cascade.
  */
 @Entity
 @Table(name = "pathway_modules")
@@ -46,13 +50,16 @@ public class PathwayModule {
     @Column(name = "estimated_minutes", nullable = false)
     private int estimatedMinutes;
 
+    // Drives the icon on the page: number (AVAILABLE), lock (LOCKED), tick (COMPLETED)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ModuleStatus status;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public PathwayModule() {
     }
 
+    // Convenience constructor so ModulePlanService can build a module in one line
     public PathwayModule(
             int moduleOrder,
             String title,

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
  * Turns enum constants into readable labels for templates,
  * e.g. HARASSMENT_BULLYING -> "Harassment Bullying".
  * Usage in Thymeleaf: ${@labels.of(pathway.pathwayMode)}
+ * USED IN: pathway-details.html (chips and the notice card).
+ * WHY the bean name "labels": Thymeleaf calls a bean with @name.
  */
 @Component("labels")
 public class LabelFormatter {
@@ -15,6 +17,7 @@ public class LabelFormatter {
             return "";
         }
 
+        // WHY StringBuilder: builds the text piece by piece without a new String each step
         StringBuilder label = new StringBuilder();
 
         for (String word : value.name().split("_")) {

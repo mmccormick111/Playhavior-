@@ -25,10 +25,21 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The learning pathway generated for one case (table: learning_pathways).
+ *
+ * RELATIONSHIPS:
+ *   - one PlayerCase     (@OneToOne, case_id, unique: one pathway per case)
+ *   - one PlatformPolicy (@ManyToOne, policy_id: the rules version it cites)
+ *   - many PathwayModule (@OneToMany, mappedBy "pathway", cascade ALL)
+ * CREATED BY: PlayhaviorWorkflowService.buildLearningPathway() (FLOW step 5)
+ * READ BY: LearningPathwayController -> pathway-details.html (FLOW step 7)
+ */
 @Entity
 @Table(name = "learning_pathways")
 public class LearningPathway {
 
+    // ===== STORED COLUMNS (the decisions made by PlayhaviorWorkflowService) =====
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pathway_id")
@@ -59,10 +70,15 @@ public class LearningPathway {
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
 
+    // ===== RELATIONSHIPS =====
+
+    // Which version of the platform's rules this pathway cites.
+    // WHY stored: citations stay accurate even if the policy changes later.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "policy_id")
     private PlatformPolicy platformPolicy;
 
+    // One pathway per case; unique = true makes the database enforce it
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "case_id",
@@ -71,6 +87,10 @@ public class LearningPathway {
     )
     private PlayerCase playerCase;
 
+    // mappedBy = "pathway": the foreign key lives in pathway_modules, not here.
+    // cascade = ALL: saving the pathway saves its modules (no module repository needed).
+    // orphanRemoval: a module removed from this list is deleted from the database.
+    // @OrderBy: always loaded in module order.  "= new ArrayList<>()": never null.
     @OneToMany(
             mappedBy = "pathway",
             cascade = CascadeType.ALL,
@@ -79,18 +99,27 @@ public class LearningPathway {
     @OrderBy("moduleOrder ASC")
     private List<PathwayModule> modules = new ArrayList<>();
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public LearningPathway() {
     }
+
+    // ===== HELPER: addModule =====
 
     /*
      * Keeps both sides of the relationship in sync
      * and updates the stored module count.
+     * WHY: in Java both sides must be set by hand; without setPathway(this)
+     *      the module would be saved with no pathway_id.
      */
     public void addModule(PathwayModule module) {
         module.setPathway(this);
         modules.add(module);
         totalModules = modules.size();
     }
+
+    // ===== CALCULATED VALUES (no column behind these) =====
+    // Computed from the module list so templates stay free of maths.
+    // USED BY: ${pathway.completedModules}, ${pathway.progressPercent}, etc.
 
     public int getCompletedModules() {
         return (int) modules.stream()
@@ -99,6 +128,7 @@ public class LearningPathway {
     }
 
     public int getProgressPercent() {
+        // WHY the check: dividing by zero would crash
         return totalModules == 0
                 ? 0
                 : getCompletedModules() * 100 / totalModules;
@@ -115,6 +145,8 @@ public class LearningPathway {
                 .mapToInt(PathwayModule::getEstimatedMinutes)
                 .sum();
     }
+
+    // ===== GETTERS / SETTERS =====
 
     public Long getPathwayId() {
         return pathwayId;

@@ -8,8 +8,24 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Translates the dropdown reason into a category and a learning pathway (service layer).
+ *
+ * FLOW: step 4 (mapReason) and step 3 (isRecognizedReason, via the validator).
+ * CALLED BY: PlayhaviorWorkflowService.startWorkflow(), ViolationInputValidator.
+ *
+ * DATA STRUCTURE: two HashMaps, filled once when Spring creates this bean.
+ *   reasonToCategory:  75 reason keys -> 14 ViolationCategory values
+ *   categoryToPathway: 14 categories  -> 14 PathwayCode values
+ * WHY HashMap: constant-time lookup for fixed data read on every submission.
+ * WHY two maps: "what kind of violation" is kept separate from "which pathway",
+ *     and the category is also what the policy CSV is matched on.
+ * KEEP IN SYNC: every <option value> in violation-intake.html must be listed here.
+ */
 @Service
 public class CategoryMappingService {
+
+    // ===== THE TWO LOOKUP TABLES =====
 
     /*
      * First HashMap:
@@ -25,11 +41,13 @@ public class CategoryMappingService {
     private final Map<ViolationCategory, PathwayCode> categoryToPathway =
             new HashMap<>();
 
+    // Fills both maps once, when Spring creates the bean; after that they are only read
     public CategoryMappingService() {
         initializeReasonMappings();
         initializePathwayMappings();
     }
 
+    // ===== MAP 1: REASON -> CATEGORY =====
     private void initializeReasonMappings() {
 
         // Harassment / Bullying
@@ -178,6 +196,7 @@ public class CategoryMappingService {
         );
     }
 
+    // ===== MAP 2: CATEGORY -> PATHWAY =====
     private void initializePathwayMappings() {
 
         categoryToPathway.put(
@@ -251,9 +270,12 @@ public class CategoryMappingService {
         );
     }
 
+    // ===== HELPERS + PUBLIC LOOKUPS =====
+
     /*
      * Adds several specific violation-reason keys
      * to the same top-level category.
+     * WHY String... (varargs): one call per category, any number of reasons.
      */
     private void addReasons(
             ViolationCategory category,
@@ -267,6 +289,9 @@ public class CategoryMappingService {
     /*
      * Called by PlayhaviorWorkflowService after the user
      * submits the violation questionnaire.
+     * Returns BOTH values together as a MappingResult record.
+     * WHY throw on unknown keys: a silent null would crash later,
+     *     somewhere much harder to trace.
      */
     public MappingResult mapReason(String reasonKey) {
 

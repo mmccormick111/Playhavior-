@@ -22,9 +22,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+/**
+ * The "director" of the notice-to-pathway process (service layer).
+ *
+ * FLOW: steps 4 and 5. Decides everything first, then saves everything.
+ * CALLED BY: ViolationIntakeController.submitForm()
+ * CALLS: CategoryMappingService, PenaltyEligibilityService, PlatformPolicyService,
+ *        ModulePlanService, and the BanReport / PlayerCase / LearningPathway repositories.
+ * WHY a separate service: the controller stays thin, and these rules can be
+ *     tested and reused (e.g. by the dashboard) without the web layer.
+ */
 @Service
 public class PlayhaviorWorkflowService {
 
+    // ===== DEPENDENCIES (constructor injection) =====
     private final PlayerCaseRepository caseRepository;
     private final BanReportRepository banReportRepository;
     private final LearningPathwayRepository learningPathwayRepository;
@@ -57,20 +68,34 @@ public class PlayhaviorWorkflowService {
         this.modulePlanService = modulePlanService;
     }
 
+    // ===== MAIN WORKFLOW (public) =====
+
+    /**
+     * Turns a valid form into saved records and returns the new pathway.
+     * WHY @Transactional: every save below succeeds together or is rolled back
+     *     together, so a failure never leaves a report with no pathway.
+     * Q: Why this save order? Each record needs the id of the one before it.
+     * RETURNS: the saved pathway, so the controller can redirect to its id.
+     */
     @Transactional
     public LearningPathway startWorkflow(
             Player player,
             ViolationInputForm form
     ) {
+        // ----- PHASE 1: DECIDE (FLOW step 4). Nothing is saved yet, so bad input fails early -----
+
+        // 1a. Look up the platform from its key (throws if the key was tampered with)
         Platform platform = findPlatform(
                 form.getPlatformKey()
         );
 
+        // 1b. Reason key -> category -> pathway code (two HashMap lookups)
         MappingResult mapping =
                 categoryMappingService.mapReason(
                         form.getViolationReasonKey()
                 );
 
+        // 1c. Ban type + length -> REINSTATEMENT_SUPPORT (5 modules) or EDUCATIONAL_ONLY (3)
         PathwayMode pathwayMode =
                 penaltyEligibilityService.determineMode(
                         form.getPenaltyType(),
@@ -78,14 +103,19 @@ public class PlayhaviorWorkflowService {
                         form.getPenaltyDurationUnit()
                 );
 
+        // 1d. PERSONALIZED if the player pasted evidence; kept for tailoring content later
         PersonalizationLevel personalizationLevel =
                 determinePersonalization(form);
 
+        // 1e. The platform's current code of conduct, cited on the pathway page
         PlatformPolicy activePolicy =
                 platformPolicyService.findActivePolicy(
                         platform.getPlatformKey()
                 );
 
+        // ----- PHASE 2: SAVE (FLOW step 5), in dependency order -----
+
+        // 2a. The notice details (the ban_reports row to check in H2)
         BanReport banReport = buildBanReport(
                 form,
                 platform,
@@ -95,6 +125,7 @@ public class PlayhaviorWorkflowService {
         BanReport savedBanReport =
                 banReportRepository.save(banReport);
 
+        // 2b. The case links the player to the report (needs the report's id)
         PlayerCase playerCase = buildCase(
                 player,
                 savedBanReport,
@@ -104,6 +135,8 @@ public class PlayhaviorWorkflowService {
         PlayerCase savedCase =
                 caseRepository.save(playerCase);
 
+        // 2c. The pathway + its modules (needs the case's id).
+        //     WHY no module save: cascade = ALL on LearningPathway.modules saves them too.
         LearningPathway pathway = buildLearningPathway(
                 savedCase,
                 mapping,
@@ -116,6 +149,10 @@ public class PlayhaviorWorkflowService {
         return learningPathwayRepository.save(pathway);
     }
 
+    // ===== BUILD HELPERS (private: only this class uses them) =====
+
+    // Platform by key, or IllegalArgumentException.
+    // WHY: fail loudly on a dropdown value that is not a supported platform.
     private Platform findPlatform(String platformKey) {
         return platformRepository
                 .findByPlatformKey(platformKey)
@@ -127,6 +164,8 @@ public class PlayhaviorWorkflowService {
                 );
     }
 
+    // Copies the form into a new BanReport (not saved yet).
+    // WHY here and not in the entity: keeps form logic out of the data model.
     private BanReport buildBanReport(
             ViolationInputForm form,
             Platform platform,
@@ -166,6 +205,7 @@ public class PlayhaviorWorkflowService {
                 form.getPenaltyDurationUnit()
         );
 
+        // WHY Boolean.TRUE.equals(...): safe even if the value is null
         boolean platformProvidedEvidence =
                 Boolean.TRUE.equals(
                         form.getPlatformProvidedEvidence()
@@ -175,6 +215,7 @@ public class PlayhaviorWorkflowService {
                 platformProvidedEvidence
         );
 
+        // Evidence text is only kept when the player answered "Yes"
         if (platformProvidedEvidence) {
             banReport.setEvidenceText(
                     cleanOptionalText(
@@ -195,6 +236,7 @@ public class PlayhaviorWorkflowService {
                 )
         );
 
+        // Timestamp of the submission (the notice itself only has a date)
         banReport.setSubmittedAt(
                 LocalDateTime.now()
         );
@@ -202,6 +244,7 @@ public class PlayhaviorWorkflowService {
         return banReport;
     }
 
+    // New case with status "Open", linking the player to the saved report
     private PlayerCase buildCase(
             Player player,
             BanReport banReport,
@@ -222,6 +265,8 @@ public class PlayhaviorWorkflowService {
         return playerCase;
     }
 
+    // Gathers every decision into one LearningPathway (not saved yet).
+    // CALLS: ModulePlanService.buildPlan(); addModule() links each module to this pathway.
     private LearningPathway buildLearningPathway(
             PlayerCase playerCase,
             MappingResult mapping,
@@ -254,6 +299,8 @@ public class PlayhaviorWorkflowService {
 
         pathway.setPathwayTitle(pathwayTitle);
 
+        // The placeholder module list; pathway::addModule is a method reference,
+        // meaning "call pathway.addModule(module) for each module"
         modulePlanService
                 .buildPlan(
                         pathwayMode,
@@ -266,6 +313,8 @@ public class PlayhaviorWorkflowService {
                 LocalDateTime.now()
         );
 
+        // NOTE: findActivePolicy() throws when a platform has no policy,
+        // so this check is always true today.
         if (activePolicy != null) {
             pathway.setPlatformPolicy(activePolicy);
         }
@@ -275,6 +324,9 @@ public class PlayhaviorWorkflowService {
         return pathway;
     }
 
+    // ===== SMALL DECISION / TEXT HELPERS (private) =====
+
+    // PERSONALIZED only when evidence was given AND the text is not blank
     private PersonalizationLevel determinePersonalization(
             ViolationInputForm form
     ) {
@@ -290,6 +342,8 @@ public class PlayhaviorWorkflowService {
                 : PersonalizationLevel.GENERIC;
     }
 
+    // For "Other", the player's own words; otherwise a readable version of the key.
+    // WHY: stated_reason always holds something a person can read.
     private String determineStatedReason(
             ViolationInputForm form
     ) {
@@ -311,6 +365,7 @@ public class PlayhaviorWorkflowService {
         );
     }
 
+    // PERSONAL_INSULTS -> "Personal insults"
     private String makeReasonReadable(
             String reasonKey
     ) {
@@ -328,6 +383,8 @@ public class PlayhaviorWorkflowService {
         ) + readableReason.substring(1);
     }
 
+    // Blank -> null, otherwise trimmed.
+    // WHY: "nothing entered" is always stored as NULL, never as "" or "   ".
     private String cleanOptionalText(
             String value
     ) {
@@ -338,6 +395,9 @@ public class PlayhaviorWorkflowService {
         return value.trim();
     }
 
+    // Human title for each pathway code.
+    // WHY a switch expression: it must cover every PathwayCode, so adding a new
+    // code without a title will not compile.
     private String titleFor(
             PathwayCode pathwayCode
     ) {
@@ -386,6 +446,13 @@ public class PlayhaviorWorkflowService {
         };
     }
 
+    // ===== COMPLETION (not used yet) =====
+
+    /**
+     * Creates a SummaryReport with a narrative and a random 6-digit verification code.
+     * TODO: not called anywhere yet. Groundwork for the Completion page;
+     *       link SummaryReport to the pathway (and its reference code) first.
+     */
     @Transactional
     public SummaryReport completePathway(
             Long pathwayId

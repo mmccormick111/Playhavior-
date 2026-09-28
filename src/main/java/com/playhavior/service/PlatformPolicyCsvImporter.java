@@ -22,6 +22,19 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
+/**
+ * Loads data/platform-policy-rules.csv into the database at startup (service layer).
+ *
+ * FLOW: step 0 (startup, before any request).
+ * WHY @Order(2): ReferenceDataConfiguration (@Order(1)) must create the platforms
+ *     first, because every CSV row names a platform.
+ * CSV COLUMNS: platform_key, policy_title, source_url, version_label, effective_date,
+ *     retrieved_date, violation_category, section_title, section_reference, rule_summary
+ * WHY fail fast: an unknown platform or category stops startup, so bad data
+ *     never reaches users.
+ * WHY the exists-checks: safe to run twice (no duplicate policies or rules).
+ * NOTE: the CSV itself cannot hold comments; document it here instead.
+ */
 @Component
 @Order(2)
 public class PlatformPolicyCsvImporter
@@ -41,6 +54,8 @@ public class PlatformPolicyCsvImporter
         this.ruleRepository = ruleRepository;
     }
 
+    // ApplicationRunner: Spring calls run() once after startup.
+    // WHY @Transactional: all rows import together, or none do.
     @Override
     @Transactional
     public void run(
@@ -51,6 +66,8 @@ public class PlatformPolicyCsvImporter
                         "data/platform-policy-rules.csv"
                 );
 
+        // try-with-resources: the file closes automatically, even on an error.
+        // setHeader + setSkipHeaderRecord: use line 1 as column names (record.get("platform_key")).
         try (
                 Reader reader = new InputStreamReader(
                         resource.getInputStream(),
@@ -71,6 +88,8 @@ public class PlatformPolicyCsvImporter
         }
     }
 
+    // One CSV line: find the platform -> find or create its policy ->
+    // save the rule unless it is already there.
     private void importRecord(CSVRecord record) {
         String platformKey =
                 record.get("platform_key");
@@ -98,6 +117,7 @@ public class PlatformPolicyCsvImporter
                         title,
                         versionLabel
                 )
+                // WHY orElseGet: many rows share one policy; only the first row creates it
                 .orElseGet(() ->
                         createPolicy(
                                 platform,
@@ -107,6 +127,7 @@ public class PlatformPolicyCsvImporter
                 );
 
         ViolationCategory category =
+                // Throws on a misspelt category name -> startup fails (fail fast)
                 ViolationCategory.valueOf(
                         record.get("violation_category")
                 );
@@ -146,6 +167,9 @@ public class PlatformPolicyCsvImporter
         ruleRepository.save(rule);
     }
 
+    // ===== SMALL HELPERS =====
+
+    // A new PlatformPolicy from the first CSV row that mentions it
     private PlatformPolicy createPolicy(
             Platform platform,
             CSVRecord record,
@@ -186,6 +210,7 @@ public class PlatformPolicyCsvImporter
         return policyRepository.save(policy);
     }
 
+    // Blank date -> null
     private LocalDate parseDate(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -194,6 +219,7 @@ public class PlatformPolicyCsvImporter
         return LocalDate.parse(value.trim());
     }
 
+    // Blank date -> today (the retrieved date must always have a value)
     private LocalDate parseRequiredDate(String value) {
         if (value == null || value.isBlank()) {
             return LocalDate.now();
