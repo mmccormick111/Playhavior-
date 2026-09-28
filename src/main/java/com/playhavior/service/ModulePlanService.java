@@ -15,6 +15,9 @@ import java.util.List;
  * estimates below are stand-ins until the teaching approach
  * has been researched. Replace buildPlan() when real module
  * content is ready; nothing else needs to change.
+ *
+ * FLOW: step 5.  CALLED BY: PlayhaviorWorkflowService.buildLearningPathway()
+ * RESULT: 3 base modules, plus 2 more for REINSTATEMENT_SUPPORT (5 total).
  */
 @Service
 public class ModulePlanService {
@@ -42,6 +45,7 @@ public class ModulePlanService {
                 "Placeholder module on how the behavior affects the community."
         });
 
+        // Appeal-support pathways get two extra modules
         if (pathwayMode == PathwayMode.REINSTATEMENT_SUPPORT) {
             outline.add(new String[] {
                     "Accountability and Reflection",
@@ -62,6 +66,7 @@ public class ModulePlanService {
                     outline.get(i)[1],
                     PLACEHOLDER_LESSONS_PER_MODULE,
                     PLACEHOLDER_MINUTES_PER_MODULE,
+                    // WHY: only module 1 starts AVAILABLE; the rest unlock in order
                     i == 0 ? ModuleStatus.AVAILABLE : ModuleStatus.LOCKED
             ));
         }

@@ -7,6 +7,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+/**
+ * A gaming platform the app supports (table: platforms). Reference data.
+ * CREATED BY: ReferenceDataConfiguration at startup (FLOW step 0).
+ * READ BY: the Platform dropdown, BanReport, PlatformPolicy, the CSV importer.
+ */
 @Entity
 @Table(name = "platforms")
 public class Platform {
@@ -15,6 +20,7 @@ public class Platform {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long platformId;
 
+    // Stable code ("XBOX") used by the CSV and the form; displayName is for people
     @Column(
             name = "platform_key",
             nullable = false,
@@ -31,9 +37,11 @@ public class Platform {
     )
     private String displayName;
 
+    // WHY: hide a platform from the dropdown without deleting it (old reports keep working)
     @Column(nullable = false)
     private boolean active = true;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public Platform() {
     }
 

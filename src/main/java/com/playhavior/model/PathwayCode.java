@@ -1,5 +1,9 @@
 package com.playhavior.model;
 
+/**
+ * Which learning pathway a category leads to (one per category).
+ * PlayhaviorWorkflowService.titleFor() turns each into a human title.
+ */
 public enum PathwayCode {
     RESPECTFUL_COMMUNICATION,
     INCLUSION_AND_ANTI_DISCRIMINATION,

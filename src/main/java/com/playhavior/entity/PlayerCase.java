@@ -12,8 +12,14 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 /*
- * Links a player to one submitted ban report.
+ * Links a player to one submitted ban report: one "case file" (table: player_case).
  * (Named PlayerCase because "CASE" is a reserved word in SQL/JPQL.)
+ *
+ * RELATIONSHIPS:
+ *   - many cases -> one Player (@ManyToOne, player_id): a player can be banned again
+ *   - one case   -> one BanReport (@OneToOne, report_id, unique)
+ *   - one LearningPathway points back here (its case_id)
+ * CREATED BY: PlayhaviorWorkflowService.buildCase() (FLOW step 5)
  */
 @Entity
 @Table(name = "player_case")
@@ -42,6 +48,7 @@ public class PlayerCase {
     )
     private BanReport banReport;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public PlayerCase() {
     }
 

@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Your Learning Pathway (FLOW step 7)
+  RENDERED BY: LearningPathwayController.showPathway()
+  MODEL: ${pathway}, ${banReport}, ${policyRules};  ${@labels} = LabelFormatter bean
+*/-->
 
 <head th:replace="~{fragments/layout :: head('Your Learning Pathway')}"></head>
 
@@ -29,6 +34,7 @@
   </section>
 
   <!-- Overall progress -->
+  <!--/* progressPercent / completedModules are calculated getters on LearningPathway */-->
   <section class="card progress-card">
     <div>
       <h2>Overall Progress</h2>
@@ -53,6 +59,7 @@
   </section>
 
   <!-- Module timeline -->
+  <!--/* th:classappend picks is-current / is-done / is-locked from module.status; the CSS styles each */-->
   <ol class="module-timeline">
     <li class="module-row"
         th:each="module : ${pathway.modules}"
@@ -91,6 +98,7 @@
   </ol>
 
   <!-- Notice details (what was saved from the form) -->
+  <!--/* Reads the BanReport row; the reference code is what goes on the summary report */-->
   <section class="card">
     <h2>Your Notice</h2>
 
@@ -129,6 +137,7 @@
   </section>
 
   <!-- Platform policy citations from the CSV -->
+  <!--/* PolicyRules matching this pathway's policy + category; each links to the official source */-->
   <section class="card">
     <h2>Platform Standards Referenced</h2>
 

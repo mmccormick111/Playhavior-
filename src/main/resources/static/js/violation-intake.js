@@ -1,3 +1,7 @@
+// Shows/hides form fields based on earlier answers (convenience only).
+// WHY the server still checks: JS can be disabled; ViolationInputValidator enforces
+//     the same rules on the server.
+// LOADED BY: violation-intake.html (at the end of <body>, so the HTML exists first)
 document.addEventListener("DOMContentLoaded", () => {
     const penaltyType =
         document.getElementById("penaltyType");
@@ -31,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "input[name='platformProvidedEvidence']"
         );
 
+    // Length + unit: shown and required only for temporary penalties
     function updateDuration() {
         const temporaryTypes = [
             "TEMPORARY_BAN",
@@ -55,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Custom reason box: shown only for "Other or platform-specific reason"
     function updateCustomReason() {
         const show =
             reason.value === "OTHER_PLATFORM_SPECIFIC";
@@ -71,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Evidence textarea: shown only when "Yes" is picked
     function updateEvidence() {
         const selected =
             document.querySelector(
@@ -93,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Re-run each rule whenever its controlling field changes
     penaltyType.addEventListener(
         "change",
         updateDuration
@@ -110,6 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     });
 
+    // Run once on load: when the form comes back with errors, the right
+    // fields must already be visible
     updateDuration();
     updateCustomReason();
     updateEvidence();

@@ -1,3 +1,10 @@
+/* =========================================
+   PlayHavior styles. Colours live in the :root variables below.
+   Sections: colours | base | header/nav | page layout | form | buttons |
+             errors | pathway page | mobile (@media)
+   ========================================= */
+
+/* ===== COLOURS (change one variable to recolour the site) ===== */
 :root {
     --navy: #2f4785;
     --navy-dark: #24386d;
@@ -21,6 +28,7 @@
     box-sizing: border-box;
 }
 
+/* ===== BASE ===== */
 body {
     margin: 0;
     background: var(--background);
@@ -35,6 +43,7 @@ h3,
     font-family: "Poppins", "Inter", Arial, sans-serif;
 }
 
+/* ===== HEADER / NAV (fragments/layout.html) ===== */
 .site-header {
     background: var(--navy);
     box-shadow: 0 2px 10px rgba(27, 41, 77, 0.15);
@@ -139,6 +148,7 @@ h3,
     font-weight: 800;
 }
 
+/* ===== PAGE LAYOUT ===== */
 .page-shell {
     width: min(1040px, calc(100% - 40px));
     margin: 0 auto;
@@ -171,6 +181,7 @@ h3,
     line-height: 1.55;
 }
 
+/* ===== FORM (violation-intake.html) ===== */
 .form-card {
     padding: 48px 52px;
     border: 1px solid var(--border);
@@ -296,6 +307,7 @@ textarea:focus {
     margin-top: 0;
 }
 
+/* Hidden until violation-intake.js adds the "visible" class */
 .conditional-field {
     display: none;
 }
@@ -318,6 +330,7 @@ textarea:focus {
     line-height: 1.55;
 }
 
+/* ===== BUTTONS ===== */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -360,6 +373,7 @@ textarea:focus {
     color: var(--text);
 }
 
+/* ===== ERRORS ===== */
 .field-error {
     border-color: var(--danger);
 }
@@ -384,7 +398,7 @@ textarea:focus {
     color: var(--danger);
 }
 
-/* ---------- Learning pathway page ---------- */
+/* ===== PATHWAY PAGE (pathway-details.html): chips, cards, progress bar, timeline ===== */
 
 .pathway-page {
     width: min(980px, calc(100% - 40px));
@@ -578,6 +592,7 @@ textarea:focus {
     margin: 0;
 }
 
+/* ===== MOBILE: narrower screens stack the nav, cards and buttons ===== */
 @media (max-width: 900px) {
     .nav-shell {
         min-height: auto;

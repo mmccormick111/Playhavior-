@@ -24,6 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+/**
+ * End-to-end tests for the notice -> pathway flow (FLOW steps 1-7).
+ * MockMvc = a fake browser that drives the real controllers against H2.
+ * WHY @Transactional: each test's database changes are rolled back afterwards,
+ *     so the tests cannot affect each other.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -38,6 +44,7 @@ class ViolationToPathwayFlowTests {
     @Autowired
     private BanReportRepository banReportRepository;
 
+    // Proves FLOW step 1: / redirects to the notice form
     @Test
     void homeRedirectsToNoticeForm() throws Exception {
         mockMvc.perform(get("/"))
@@ -45,6 +52,8 @@ class ViolationToPathwayFlowTests {
                 .andExpect(view().name("redirect:/notices/new"));
     }
 
+    // Proves FLOW step 2: the form renders, the stylesheet link is present
+    // (the original bug) and the Platform dropdown is filled
     @Test
     void noticeFormRendersWithPlatformsAndStylesheet() throws Exception {
         mockMvc.perform(get("/notices/new"))
@@ -53,8 +62,11 @@ class ViolationToPathwayFlowTests {
                 .andExpect(content().string(containsString("PlayStation Network")));
     }
 
+    // Proves FLOW steps 3-7: valid notice -> saved rows -> redirect -> page shows
+    // the pathway, the modules, the reference code and an Xbox policy citation
     @Test
     void submittingNoticeGeneratesAndStoresPathway() throws Exception {
+        // ACT: submit a valid Xbox permanent-ban notice
         MvcResult result = mockMvc.perform(post("/notices")
                         .param("platformKey", "XBOX")
                         .param("gameTitle", "Halo Infinite")
@@ -68,6 +80,7 @@ class ViolationToPathwayFlowTests {
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
 
+        // ASSERT: the database holds the expected decisions
         LearningPathway pathway = pathwayRepository.findAll().getLast();
 
         assertThat(result.getResponse().getRedirectedUrl())
@@ -89,6 +102,7 @@ class ViolationToPathwayFlowTests {
         assertThat(banReportRepository.findAll().getLast().getPlatformCaseNumber())
                 .isEqualTo("XB-12345");
 
+        // ASSERT: the pathway page shows it
         mockMvc.perform(get("/pathways/" + pathway.getPathwayId()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Respectful Communication")))
@@ -97,6 +111,8 @@ class ViolationToPathwayFlowTests {
                 .andExpect(content().string(containsString("Standard 2")));
     }
 
+    // Proves FLOW step 3's error path: missing fields come back as field errors
+    // (annotation errors AND the validator's duration rule)
     @Test
     void invalidSubmissionReturnsFormWithErrors() throws Exception {
         mockMvc.perform(post("/notices")
@@ -111,6 +127,7 @@ class ViolationToPathwayFlowTests {
                 .andExpect(content().string(containsString("Please correct the highlighted fields.")));
     }
 
+    // Proves an unknown pathway id gives a real 404, not a 500 error
     @Test
     void unknownPathwayReturns404() throws Exception {
         mockMvc.perform(get("/pathways/999999"))

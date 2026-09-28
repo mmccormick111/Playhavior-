@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Submit Your Notice (FLOW steps 2-3)
+  RENDERED BY: ViolationIntakeController.showForm(), and submitForm() when there are errors
+  MODEL: ${violationForm} (the form object), ${platforms} (the Platform dropdown)
+  SUBMITS TO: POST /notices
+  NOTE: Thymeleaf removes comment blocks like this one before sending the page;
+        the normal HTML comments below are sent to the browser (View Source).
+*/-->
 
 <head th:replace="~{fragments/layout :: head('Submit Your Notice')}"></head>
 
@@ -32,6 +40,7 @@
             th:object="${violationForm}"
             method="post">
 
+      <!--/* Error summary: lists every validation error at the top (role="alert" for screen readers) */-->
       <div
               class="error-summary"
               th:if="${#fields.hasErrors('*')}"
@@ -109,6 +118,7 @@
       </div>
 
       <!-- Violation reason -->
+      <!--/* Option values MUST match the keys in CategoryMappingService.initializeReasonMappings() */-->
 
       <div class="form-group">
         <label for="violationReasonKey">
@@ -466,6 +476,7 @@
       </div>
 
       <!-- Custom reason -->
+      <!--/* Conditional field: shown/hidden by violation-intake.js (the server validates it too) */-->
 
       <div
               id="custom-reason-group"
@@ -549,6 +560,7 @@
       </div>
 
       <!-- Penalty duration -->
+      <!--/* Conditional fields: shown for temporary ban / suspension / restriction */-->
 
       <div
               id="duration-fields"
@@ -683,6 +695,7 @@
       </fieldset>
 
       <!-- Evidence text -->
+      <!--/* Conditional field: shown only when the evidence answer is Yes */-->
 
       <div
               id="evidence-group"
@@ -795,6 +808,7 @@
       </div>
 
       <!-- Actions -->
+      <!--/* Submit -> POST /notices -> ViolationIntakeController.submitForm() */-->
 
       <div class="form-actions">
         <a

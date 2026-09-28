@@ -13,6 +13,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * One rule from a platform policy, tagged with a violation category (table: policy_rules).
+ * One row per line of platform-policy-rules.csv.
+ * RELATIONSHIP: many rules -> one PlatformPolicy (@ManyToOne, policy_id).
+ * READ BY: PlatformPolicyService.findRulesFor() -> the "Standards Referenced" card.
+ */
 @Entity
 @Table(name = "policy_rules")
 public class PolicyRule {
@@ -25,6 +31,7 @@ public class PolicyRule {
     @JoinColumn(name = "policy_id", nullable = false)
     private PlatformPolicy platformPolicy;
 
+    // How the pathway page finds "the Xbox rules about harassment": same policy + category
     @Enumerated(EnumType.STRING)
     @Column(
             name = "violation_category",
@@ -46,6 +53,7 @@ public class PolicyRule {
     )
     private String ruleSummary;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public PolicyRule() {
     }
 

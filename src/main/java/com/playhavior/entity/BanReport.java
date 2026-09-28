@@ -18,6 +18,16 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Everything the player entered about their violation notice (table: ban_reports).
+ * This is the row to check in the H2 console after a demo submission.
+ *
+ * RELATIONSHIPS: many reports -> one Platform (@ManyToOne, platform_id).
+ *                One PlayerCase points to each report (report_id).
+ * CREATED BY: PlayhaviorWorkflowService.buildBanReport() (FLOW step 5)
+ * NOTE: stated_reason / report_id use older snake_case names; newer entities
+ *       use camelCase fields with @Column(name = ...).
+ */
 @Entity
 @Table(name = "ban_reports")
 public class BanReport {
@@ -26,6 +36,7 @@ public class BanReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long report_id;
 
+    // The readable reason ("Personal insults"), or the player's own words for "Other"
     @Column(name = "stated_reason", nullable = false)
     private String stated_reason;
 
@@ -40,6 +51,7 @@ public class BanReport {
     @Column(name = "penalty_type", nullable = false)
     private PenaltyType penaltyType;
 
+    // WHY Integer, not int: null = no duration (e.g. a permanent ban)
     @Column(name = "penalty_duration_amount")
     private Integer penaltyDurationAmount;
 
@@ -47,6 +59,8 @@ public class BanReport {
     @Column(name = "penalty_duration_unit")
     private DurationUnit penaltyDurationUnit;
 
+    // WHY both key AND category: the key keeps the exact detail the player picked;
+    // the category is the decision recorded at submission time (used for policy lookup)
     @Column(name = "violation_reason_key", nullable = false)
     private String violationReasonKey;
 
@@ -60,15 +74,19 @@ public class BanReport {
     @Column(name = "evidence_text", length = 5000)
     private String evidenceText;
 
+    // LocalDate: the notice only has a date. submittedAt below is a full timestamp.
     @Column(name = "ban_issue_date", nullable = false)
     private LocalDate banIssueDate;
 
+    // The platform's own reference code; goes on the summary report so the
+    // platform can look up the case during an appeal
     @Column(name = "platform_case_number", length = 100)
     private String platformCaseNumber;
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
+    // Required by Hibernate: it creates an empty object, then fills it from the row
     public BanReport() {
     }
 
