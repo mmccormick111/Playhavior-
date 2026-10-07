@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: System Integrity, the Risk Matrix (framework Phase 2, Track B: System Integrity)
+  RENDERED BY: ModuleController.showModule() for ModuleType.RISK_MATRIX
+  MODEL: ${scenarios} (List<RiskScenario>), ${riskLevels}, ${narration}, plus shared data
+  DESIGN:
+    - Modality Principle (Mayer): an animated diagram with SPOKEN narration
+      (the browser's built-in speech engine), with the transcript shown too.
+    - Active Processing (Mayer): the player sorts grey-market scenarios into the
+      matrix; each correct card moves into its column with the reason why.
+  JS: /js/modules.js (data-module="risk-matrix")
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Risk Matrix')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('pathway')}"></header>
+
+<main class="page-shell module-page" data-module="risk-matrix">
+
+  <section th:replace="~{fragments/module :: intro}"></section>
+  <div th:replace="~{fragments/module :: messages}"></div>
+
+  <!--/* ===== PRE-TRAINING: how integrity violations spread ===== */-->
+  <section class="card">
+    <h2>How one shortcut spreads</h2>
+
+    <div class="impact-flow" aria-hidden="true">
+      <div class="impact-node"><span>🧩</span>Your shortcut<small>script, exploit, link</small></div>
+      <div class="impact-arrow">&rarr;</div>
+      <div class="impact-node"><span>🖥️</span>Game infrastructure<small>servers, economy, matchmaking</small></div>
+      <div class="impact-arrow">&rarr;</div>
+      <div class="impact-node"><span>🤝</span>Community trust<small>fair matches, safe accounts</small></div>
+    </div>
+
+    <button type="button" class="secondary-button" data-role="narrate">▶ Play narration</button>
+    <p class="transcript" data-role="transcript" th:text="${narration}">Narration</p>
+  </section>
+
+  <!--/* ===== THE MATRIX ===== */-->
+  <section class="card">
+    <h2>Sort each scenario</h2>
+    <p class="muted">Pick the column each action belongs in. Real outcomes vary by platform; this is about recognising the risk.</p>
+
+    <div class="scenario-pool">
+      <article class="scenario-card" th:each="scenario : ${scenarios}"
+               th:attr="data-scenario=${scenario.key()},
+                        data-correct=${scenario.correctLevel().name()},
+                        data-explanation=${scenario.explanation()}">
+        <p th:text="${scenario.prompt()}">Scenario</p>
+        <div class="level-buttons">
+          <button type="button" class="level-button" th:each="level : ${riskLevels}"
+                  th:attr="data-level=${level.name()}" th:text="${level.label}">Level</button>
+        </div>
+        <p class="feedback" data-role="feedback" aria-live="polite"></p>
+      </article>
+    </div>
+
+    <div class="matrix-columns">
+      <div class="matrix-column" th:each="level : ${riskLevels}"
+           th:attr="data-column=${level.name()}" th:classappend="'col-' + ${level.name().toLowerCase()}">
+        <h3 th:text="${level.label}">Level</h3>
+      </div>
+    </div>
+  </section>
+
+  <form class="card unlock-panel" method="post" th:unless="${reviewMode}" hidden
+        th:action="@{/pathways/{p}/modules/{m}/complete(p=${pathway.pathwayId}, m=${module.moduleId})}">
+    <th:block th:each="scenario : ${scenarios}">
+      <input type="hidden" th:name="'answer_' + ${scenario.key()}" value="">
+      <input type="hidden" th:name="'attempts_' + ${scenario.key()}" value="0">
+    </th:block>
+    <h2>Matrix complete.</h2>
+    <p>
+      Every shortcut on the right-hand side harms people you never meet: opponents, traders,
+      and the friends whose accounts are put at risk.
+    </p>
+    <button type="submit" class="primary-button">Complete module &rarr;</button>
+  </form>
+</main>
+
+<script th:src="@{/js/modules.js}"></script>
+</body>
+</html>

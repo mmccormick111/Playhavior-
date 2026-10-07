@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Perspective Shift, the Teammate's Seat (framework Phase 2, Track A: Social & Behavioral)
+  RENDERED BY: ModuleController.showModule() for ModuleType.PERSPECTIVE_SHIFT
+  MODEL: ${rounds} (List<ChatRound>), ${startingBar}, plus the shared module data
+  DESIGN:
+    - Personalization Principle (Mayer): firm, conversational, non-judgmental wording.
+    - Perspective-Taking Simulator (Mezirow): simulated chat feeds; in round 3 the
+      player is the target.
+    - Each response moves the Morale and Team Performance bars, so the player SEES
+      text toxicity cost the match. Only constructive responses advance a round.
+  JS: /js/modules.js (data-module="perspective-shift")
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Perspective Shift')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('pathway')}"></header>
+
+<main class="page-shell module-page" data-module="perspective-shift" th:attr="data-start=${startingBar}">
+
+  <section th:replace="~{fragments/module :: intro}"></section>
+  <div th:replace="~{fragments/module :: messages}"></div>
+
+  <p class="lead-text">
+    This isn't about who you are. It's about what words do in a match. You'll step into three
+    moments; pick a response from the menu and watch the team's bars.
+  </p>
+
+  <!--/* The two live bars */-->
+  <section class="card meter-card" aria-live="polite">
+    <div class="meter">
+      <span class="meter-label">Team Morale</span>
+      <div class="meter-track"><div class="meter-fill" data-meter="morale"></div></div>
+      <span class="meter-value" data-meter-value="morale"></span>
+    </div>
+    <div class="meter">
+      <span class="meter-label">Team Performance</span>
+      <div class="meter-track"><div class="meter-fill performance" data-meter="performance"></div></div>
+      <span class="meter-value" data-meter-value="performance"></span>
+    </div>
+  </section>
+
+  <!--/* One section per round; JS shows them one at a time */-->
+  <section class="card round" th:each="round, stat : ${rounds}"
+           th:attr="data-round=${round.key()}" th:hidden="${!stat.first}">
+    <p class="step-label" th:text="'Round ' + ${stat.count} + ' of ' + ${stat.size} + ': ' + ${round.title()}">Round 1</p>
+    <p th:text="${round.scene()}">Scene</p>
+
+    <div class="chat-feed" aria-label="Simulated chat">
+      <p class="chat-line" th:each="line : ${round.feed()}" th:classappend="${line.toxic()} ? 'toxic'">
+        <span class="chat-speaker" th:text="${line.speaker()} + ':'">Kai:</span>
+        <span th:text="${line.message()}">message</span>
+      </p>
+    </div>
+
+    <label class="choice-label" th:for="'select-' + ${round.key()}" th:text="${round.prompt()}">What do you type?</label>
+    <div class="choice-row">
+      <select th:id="'select-' + ${round.key()}" data-role="choice">
+        <option value="">Choose a response...</option>
+        <option th:each="option : ${round.options()}"
+                th:value="${option.key()}"
+                th:text="${option.text()}"
+                th:attr="data-constructive=${option.constructive()},
+                         data-morale=${option.moraleDelta()},
+                         data-performance=${option.performanceDelta()},
+                         data-feedback=${option.feedback()}">Option</option>
+      </select>
+      <button type="button" class="primary-button" data-role="send">Send</button>
+    </div>
+
+    <p class="feedback" data-role="feedback" aria-live="polite"></p>
+    <button type="button" class="secondary-button" data-role="next" hidden>Next round &rarr;</button>
+  </section>
+
+  <form class="card unlock-panel" method="post" th:unless="${reviewMode}" hidden
+        th:action="@{/pathways/{p}/modules/{m}/complete(p=${pathway.pathwayId}, m=${module.moduleId})}">
+    <th:block th:each="round : ${rounds}">
+      <input type="hidden" th:name="'answer_' + ${round.key()}" value="">
+      <input type="hidden" th:name="'attempts_' + ${round.key()}" value="0">
+    </th:block>
+    <h2>Every message changed the match.</h2>
+    <p>
+      The same words that feel like venting on your side land as pressure, blame or harm on the
+      other side of the screen. You've now seen both seats.
+    </p>
+    <button type="submit" class="primary-button">Complete module &rarr;</button>
+  </form>
+</main>
+
+<script th:src="@{/js/modules.js}"></script>
+</body>
+</html>

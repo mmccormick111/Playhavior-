@@ -89,13 +89,13 @@ public class PlayhaviorWorkflowService {
                 form.getPlatformKey()
         );
 
-        // 1b. Reason key -> category -> pathway code (two HashMap lookups)
+        // 1b. Reason key -> category -> pathway code + track (HashMap lookups + a switch)
         MappingResult mapping =
                 categoryMappingService.mapReason(
                         form.getViolationReasonKey()
                 );
 
-        // 1c. Ban type + length -> REINSTATEMENT_SUPPORT (5 modules) or EDUCATIONAL_ONLY (3)
+        // 1c. Ban type + length -> REINSTATEMENT_SUPPORT (4 modules) or EDUCATIONAL_ONLY (3)
         PathwayMode pathwayMode =
                 penaltyEligibilityService.determineMode(
                         form.getPenaltyType(),
@@ -290,6 +290,11 @@ public class PlayhaviorWorkflowService {
                 pathwayMode
         );
 
+        // Social & Behavioral or System Integrity (framework Phase 2 routing)
+        pathway.setTrack(
+                mapping.track()
+        );
+
         pathway.setPersonalizationLevel(
                 personalizationLevel
         );
@@ -299,12 +304,12 @@ public class PlayhaviorWorkflowService {
 
         pathway.setPathwayTitle(pathwayTitle);
 
-        // The placeholder module list; pathway::addModule is a method reference,
+        // The four-phase module list; pathway::addModule is a method reference,
         // meaning "call pathway.addModule(module) for each module"
         modulePlanService
                 .buildPlan(
                         pathwayMode,
-                        pathwayTitle,
+                        mapping.track(),
                         platform.getDisplayName()
                 )
                 .forEach(pathway::addModule);

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  Shared pieces of every module page (module-*.html).
+  USED WITH: th:replace="~{fragments/module :: intro}" and "~{fragments/module :: messages}"
+  MODEL: ${pathway}, ${module}, ${reviewMode}, and the one-time ${error} / ${flash}
+*/-->
+<body>
+
+<!-- Breadcrumb, phase chip, title and the accountability statement -->
+<section class="module-intro" th:fragment="intro">
+  <a class="back-link" th:href="@{/pathways/{id}(id=${pathway.pathwayId})}">&larr; Back to your pathway</a>
+
+  <div class="chip-row">
+    <span class="chip chip-navy" th:text="'Module ' + ${module.moduleOrder} + ' of ' + ${pathway.totalModules}">Module 1 of 4</span>
+    <span class="chip chip-purple" th:text="${pathway.track.label}">Track</span>
+    <span class="chip chip-grey" th:text="'⏱ ~' + ${module.estimatedMinutes} + ' min'">~5 min</span>
+  </div>
+
+  <h1 th:text="${module.title}">Module title</h1>
+  <p class="muted" th:text="${module.description}">Description</p>
+
+  <div class="notice-box review-banner" th:if="${reviewMode}">
+    You completed this module. You can look through it again; your recorded results will not change.
+  </div>
+</section>
+
+<!-- Error / success messages carried across a redirect (flash attributes) -->
+<div th:fragment="messages">
+  <div class="error-summary" role="alert" th:if="${error}" th:text="${error}">Error</div>
+  <div class="notice-box" role="status" th:if="${flash}" th:text="${flash}">Message</div>
+</div>
+
+</body>
+</html>

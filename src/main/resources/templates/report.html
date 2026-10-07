@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Appeal Packet / Completion (framework Phase 4: "Application Decision Dashboard")
+  RENDERED BY: CompletionController.showReport()
+  MODEL: ${report} = AppealReport record (accessed with method calls, e.g. ${report.platform()})
+  EXPORT: the same data as JSON at /pathways/{id}/report.json for the platform's team
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Appeal Packet')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('completion')}"></header>
+
+<main class="page-shell report-page">
+
+  <div class="notice-box" role="status" th:if="${flash}" th:text="${flash}">Message</div>
+
+  <section class="page-introduction">
+    <div class="chip-row">
+      <span class="chip chip-teal" th:if="${report.readyForReview()}">Ready for review</span>
+      <span class="chip chip-grey" th:if="${report.appealPacket() and !report.readyForReview()}"
+            th:text="'In progress · ' + ${report.completedModules()} + ' of ' + ${report.totalModules()} + ' modules'">In progress</span>
+      <span class="chip chip-purple" th:unless="${report.appealPacket()}">Educational pathway</span>
+      <span class="chip chip-navy" th:text="${report.track()}">Track</span>
+    </div>
+    <h1>Appeal Packet</h1>
+    <p>
+      Your results, packaged for <strong th:text="${report.platform()}">Xbox</strong>'s moderation
+      or support team. Attach it to your appeal along with your platform reference code.
+    </p>
+    <div class="report-actions">
+      <button type="button" class="secondary-button" onclick="window.print()">Print / Save as PDF</button>
+      <a class="primary-button" th:href="@{/pathways/{id}/report.json(id=${report.pathwayId()})}" download>Download for platform (JSON)</a>
+    </div>
+  </section>
+
+  <div class="notice-box" th:unless="${report.appealPacket()}">
+    This was an educational pathway (your penalty did not qualify for appeal support), so it does
+    not include a Probationary Contract. Your results are still shown below.
+  </div>
+
+  <!--/* ===== CASE ===== */-->
+  <section class="card">
+    <h2>Case</h2>
+    <dl class="detail-list">
+      <div><dt>Player</dt><dd th:text="${report.playerName()}">Jordan Lee</dd></div>
+      <div><dt>Platform</dt><dd th:text="${report.platform()}">Xbox</dd></div>
+      <div th:if="${report.gameTitle() != null}"><dt>Game</dt><dd th:text="${report.gameTitle()}">Game</dd></div>
+      <div><dt>Reason stated</dt><dd th:text="${report.statedReason()}">Reason</dd></div>
+      <div><dt>Category</dt><dd th:text="${report.violationCategory()}">Category</dd></div>
+      <div><dt>Pathway type</dt><dd th:text="${report.pathwayMode()}">Mode</dd></div>
+      <div><dt>Date of notice</dt><dd th:text="${#temporals.format(report.noticeDate(), 'MMM d, yyyy')}">Date</dd></div>
+      <div><dt>Platform reference code</dt>
+        <dd class="reference-code" th:text="${report.platformReferenceCode()} ?: 'Not provided'">XB-123</dd></div>
+    </dl>
+  </section>
+
+  <!--/* ===== DECISION METRICS ===== */-->
+  <section>
+    <h2 class="section-title">Decision metrics</h2>
+    <div class="metric-grid">
+      <article class="card metric-card">
+        <span class="notice-label">First-Pass Accuracy</span>
+        <strong class="stat-value stat-green"
+                th:text="${report.firstPassAccuracyPercent() != null} ? ${report.firstPassAccuracyPercent()} + '%' : '-'">92%</strong>
+        <p class="muted">Did the player know the right choice immediately, or guess repeatedly to game the system?</p>
+      </article>
+      <article class="card metric-card">
+        <span class="notice-label">Engagement Velocity</span>
+        <strong class="stat-value stat-teal" th:text="${report.engagementLabel()}">Engaged</strong>
+        <p class="muted"
+           th:text="${report.secondsInvested()} + 's spent vs ' + ${report.minimumEngagedSeconds()} + 's minimum reading time. Did they digest the content or speed-click?'">Time</p>
+      </article>
+      <article class="card metric-card">
+        <span class="notice-label">Sentiment Alignment</span>
+        <strong class="stat-value stat-gold" th:text="${report.sentimentLabel()} ?: 'Not signed yet'">Accountable</strong>
+        <p class="muted">
+          <span th:if="${report.sentimentScore() != null}"
+                th:text="'Score ' + ${#numbers.formatDecimal(report.sentimentScore(), 1, 2)} + ' (-1 defensive to +1 accountable). '">Score</span>
+          Does the reflection contain accountable language or defensive evasion?
+        </p>
+      </article>
+      <article class="card metric-card">
+        <span class="notice-label">Standing Points</span>
+        <strong class="stat-value" th:text="${report.standingPoints()}">300</strong>
+        <p class="muted">Earned in the Accountability Sandbox: full points for a first-try restorative choice.</p>
+      </article>
+    </div>
+  </section>
+
+  <!--/* ===== CONTRACT ===== */-->
+  <section class="card" th:if="${report.appealPacket()}">
+    <h2>Probationary Contract</h2>
+    <p class="muted" th:if="${#lists.isEmpty(report.pledges())}">Not signed yet: complete the final module.</p>
+    <ul class="pledge-summary" th:unless="${#lists.isEmpty(report.pledges())}">
+      <li th:each="pledge : ${report.pledges()}" th:text="${pledge}">Pledge</li>
+    </ul>
+    <blockquote class="reflection-quote" th:if="${report.reflection() != null}" th:text="${report.reflection()}">Reflection</blockquote>
+  </section>
+
+  <!--/* ===== PER-MODULE BREAKDOWN ===== */-->
+  <section class="card">
+    <h2>Module breakdown</h2>
+    <div class="table-scroll">
+      <table class="metric-table">
+        <thead>
+        <tr>
+          <th>Module</th><th>Status</th><th>First-try correct</th><th>Attempts</th>
+          <th>Time</th><th>Engagement</th><th>Points</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${report.modules()}">
+          <td th:text="${row.order()} + '. ' + ${row.title()}">Module</td>
+          <td th:text="${row.status()}">Completed</td>
+          <td th:text="${row.questions() > 0} ? ${row.firstPassCorrect()} + ' / ' + ${row.questions()} : '-'">3 / 3</td>
+          <td th:text="${row.questions() > 0} ? ${row.attempts()} : '-'">3</td>
+          <td th:text="${row.secondsSpent()} + 's'">45s</td>
+          <td th:text="${row.engagement()}">Engaged</td>
+          <td th:text="${row.standingPoints()}">0</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="muted disclaimer">
+    Completing PlayHavior does not guarantee that a platform will reduce or reverse its decision.
+    Generated <span th:text="${#temporals.format(report.generatedAt(), 'MMM d, yyyy h:mm a')}">date</span>.
+  </p>
+</main>
+
+</body>
+</html>

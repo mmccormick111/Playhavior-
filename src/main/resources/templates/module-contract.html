@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Probationary Contract & Appeal Packet (framework Phase 4)
+  RENDERED BY: ModuleController.showModule() for ModuleType.PROBATIONARY_CONTRACT
+  MODEL: ${pledges} (List<Pledge> for the track), ${minPledges}, ${minReflection},
+         ${reflectionPrompt}, plus shared module data (${pathway.contract} in review mode)
+  DESIGN:
+    - Active Reintegration Pledge: the player configures their own guardrails.
+    - The written reflection is scored for Sentiment Alignment (ReflectionSentimentAnalyzer).
+    - Submitting packages everything into the appeal packet (CompletionController).
+  JS: /js/modules.js (data-module="contract") for the live counters only;
+      the server enforces the same minimums.
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Probationary Contract')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('pathway')}"></header>
+
+<main class="page-shell module-page" data-module="contract"
+      th:attr="data-min-pledges=${minPledges}, data-min-reflection=${minReflection}">
+
+  <section th:replace="~{fragments/module :: intro}"></section>
+  <div th:replace="~{fragments/module :: messages}"></div>
+
+  <!--/* ===== REVIEW MODE: show the signed contract ===== */-->
+  <section class="card" th:if="${reviewMode and pathway.contract != null}">
+    <h2>Your signed contract</h2>
+    <p class="muted" th:text="'Signed ' + ${#temporals.format(pathway.contract.signedAt, 'MMM d, yyyy h:mm a')}">Signed</p>
+    <ul class="pledge-summary">
+      <li th:each="pledge : ${pledges}" th:if="${pathway.contract.pledgeKeys.contains(pledge.key())}"
+          th:text="${pledge.text()}">Pledge</li>
+    </ul>
+    <blockquote class="reflection-quote" th:text="${pathway.contract.reflectionText}">Reflection</blockquote>
+  </section>
+
+  <form method="post" th:unless="${reviewMode}"
+        th:action="@{/pathways/{p}/modules/{m}/complete(p=${pathway.pathwayId}, m=${module.moduleId})}">
+
+    <!--/* ===== STEP 1: guardrails ===== */-->
+    <section class="card">
+      <p class="step-label">STEP 1 OF 2</p>
+      <h2>Set your guardrails for your return</h2>
+      <p class="muted">
+        Choose at least <strong th:text="${minPledges}">2</strong>. These are commitments you set
+        for yourself; they are shared with the review team as part of your packet.
+      </p>
+
+      <div class="pledge-list">
+        <label class="pledge-toggle" th:each="pledge : ${pledges}">
+          <input type="checkbox" name="pledges" th:value="${pledge.key()}">
+          <span class="toggle-switch" aria-hidden="true"></span>
+          <span th:text="${pledge.text()}">Pledge</span>
+        </label>
+      </div>
+      <p class="muted" data-role="pledge-count"></p>
+    </section>
+
+    <!--/* ===== STEP 2: reflection ===== */-->
+    <section class="card">
+      <p class="step-label">STEP 2 OF 2</p>
+      <h2>Reflect in your own words</h2>
+      <label for="reflection" class="choice-label" th:text="${reflectionPrompt}">Prompt</label>
+      <textarea id="reflection" name="reflection" rows="7" maxlength="4000"
+                placeholder="Be honest and specific. This is read by the platform's review team."></textarea>
+      <p class="muted" data-role="char-count"></p>
+    </section>
+
+    <!--/* ===== What gets exported ===== */-->
+    <section class="card">
+      <h2>What the review team will see</h2>
+      <table class="metric-table">
+        <thead>
+        <tr><th>Metric</th><th>What it proves to the moderation team</th></tr>
+        </thead>
+        <tbody>
+        <tr><td>First-Pass Accuracy</td><td>Whether you knew the right choice immediately, or guessed until something worked.</td></tr>
+        <tr><td>Reading / Engagement Velocity</td><td>Whether you spent time with each module or speed-clicked through it.</td></tr>
+        <tr><td>Sentiment Alignment</td><td>Whether your reflection uses accountable language or defensive evasion.</td></tr>
+        </tbody>
+      </table>
+      <button type="submit" class="primary-button" data-role="submit">Sign contract &amp; package my appeal &rarr;</button>
+    </section>
+  </form>
+</main>
+
+<script th:src="@{/js/modules.js}"></script>
+</body>
+</html>

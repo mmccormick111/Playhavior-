@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Dashboard, the player's home page (FLOW step 1)
+  RENDERED BY: DashboardController.showDashboard()
+  MODEL: ${dashboard} = DashboardView (displayName, initials, pathway, nextModule,
+         banReport, minutesInvested, streakDays)
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('dashboard')}"></header>
+
+<main class="page-shell dashboard-page">
+
+  <!--/* ===== EMPTY STATE: no notice submitted yet ===== */-->
+  <section class="hero-card" th:unless="${dashboard.hasPathway()}">
+    <div class="hero-text">
+      <p class="hero-eyebrow">Welcome 👋</p>
+      <h1 th:text="${dashboard.displayName}">Jordan Lee</h1>
+      <p>
+        You're taking a positive next step. Start by entering the details of your
+        violation notice, and PlayHavior will build your accountability pathway.
+      </p>
+      <a class="hero-button" th:href="@{/notices/new}">Submit your notice &rarr;</a>
+    </div>
+  </section>
+
+  <th:block th:if="${dashboard.hasPathway()}">
+
+    <!--/* ===== HERO: welcome, continue button, progress ring ===== */-->
+    <section class="hero-card">
+      <div class="hero-text">
+        <p class="hero-eyebrow">Welcome back 👋</p>
+        <h1 th:text="${dashboard.displayName}">Jordan Lee</h1>
+        <p>
+          You're taking a positive next step. Your progress matters &mdash; every
+          module brings you closer to a fresh start.
+        </p>
+
+        <!--/* Continue the AVAILABLE module, or open the packet when everything is done */-->
+        <a class="hero-button"
+           th:if="${dashboard.nextModule != null}"
+           th:href="@{/pathways/{p}/modules/{m}(p=${dashboard.pathway.pathwayId}, m=${dashboard.nextModule.moduleId})}"
+           th:text="(${dashboard.nextModule.startedAt != null} ? 'Continue' : 'Start') + ' Module ' + ${dashboard.nextModule.moduleOrder} + ' →'">
+          Continue Module 3 &rarr;
+        </a>
+        <a class="hero-button"
+           th:if="${dashboard.nextModule == null}"
+           th:href="@{/pathways/{p}/report(p=${dashboard.pathway.pathwayId})}">
+          View your appeal packet &rarr;
+        </a>
+      </div>
+
+      <!--/* Progress ring: an SVG circle whose visible stroke length = the percent.
+             Circumference = 2 x pi x 52 = 326.73 */-->
+      <div class="hero-progress">
+        <svg class="progress-ring" viewBox="0 0 120 120" role="img"
+             th:attr="aria-label=${dashboard.pathway.progressPercent} + '% complete'">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-fill" cx="60" cy="60" r="52"
+                  stroke-dasharray="326.73"
+                  th:attr="stroke-dashoffset=${326.73 * (100 - dashboard.pathway.progressPercent) / 100}"></circle>
+        </svg>
+        <div class="ring-label">
+          <strong th:text="${dashboard.pathway.progressPercent} + '%'">40%</strong>
+          <span>complete</span>
+        </div>
+        <p class="ring-caption"
+           th:text="${dashboard.pathway.completedModules} + ' of ' + ${dashboard.pathway.totalModules} + ' modules done'">
+          2 of 5 modules done
+        </p>
+      </div>
+    </section>
+
+    <!--/* ===== STATS ===== */-->
+    <section class="stat-grid">
+      <article class="card stat-card">
+        <span class="stat-icon" aria-hidden="true">✅</span>
+        <div>
+          <strong class="stat-value stat-green" th:text="${dashboard.pathway.completedModules}">2</strong>
+          <span class="muted">Modules Completed</span>
+        </div>
+      </article>
+
+      <article class="card stat-card">
+        <span class="stat-icon" aria-hidden="true">⏱️</span>
+        <div>
+          <strong class="stat-value stat-teal" th:text="${dashboard.minutesInvested} + ' min'">27 min</strong>
+          <span class="muted">Time Invested</span>
+        </div>
+      </article>
+
+      <article class="card stat-card">
+        <span class="stat-icon" aria-hidden="true">🔥</span>
+        <div>
+          <strong class="stat-value stat-gold"
+                  th:text="${dashboard.streakDays} + (${dashboard.streakDays == 1} ? ' day' : ' days')">3 days</strong>
+          <span class="muted">Streak</span>
+        </div>
+      </article>
+    </section>
+
+    <!--/* ===== YOUR LEARNING PATH ===== */-->
+    <section>
+      <div class="section-heading">
+        <h2>Your Learning Path</h2>
+        <span class="chip chip-purple" th:text="${dashboard.pathway.track.label}">Track</span>
+      </div>
+
+      <article class="card path-row"
+               th:each="module : ${dashboard.pathway.modules}"
+               th:classappend="${module.status.name() == 'AVAILABLE'} ? 'is-current' : (${module.status.name() == 'LOCKED'} ? 'is-locked')">
+
+        <div class="path-icon" aria-hidden="true"
+             th:classappend="${module.status.name() == 'COMPLETED'} ? 'icon-done'">
+          <span th:if="${module.status.name() == 'COMPLETED'}">✅</span>
+          <span th:if="${module.status.name() == 'AVAILABLE'}" th:text="${module.moduleOrder}">3</span>
+          <span th:if="${module.status.name() == 'LOCKED'}">🔒</span>
+        </div>
+
+        <div class="path-text">
+          <h3>
+            <span th:text="${module.title}">Understanding Community Standards</span>
+            <span class="status-chip chip-done" th:if="${module.status.name() == 'COMPLETED'}">Completed</span>
+            <span class="status-chip chip-progress" th:if="${module.status.name() == 'AVAILABLE'}">In Progress</span>
+            <span class="status-chip chip-locked" th:if="${module.status.name() == 'LOCKED'}">Locked</span>
+          </h3>
+          <p class="muted" th:text="'⏱ ' + ${module.estimatedMinutes} + ' min · ' + ${module.lessonCount} + (${module.lessonCount == 1} ? ' activity' : ' activities')">⏱ 12 min</p>
+        </div>
+
+        <a class="secondary-button review-button"
+           th:if="${module.status.name() == 'COMPLETED'}"
+           th:href="@{/pathways/{p}/modules/{m}(p=${dashboard.pathway.pathwayId}, m=${module.moduleId})}">Review</a>
+        <a class="primary-button"
+           th:if="${module.status.name() == 'AVAILABLE'}"
+           th:href="@{/pathways/{p}/modules/{m}(p=${dashboard.pathway.pathwayId}, m=${module.moduleId})}"
+           th:text="${module.startedAt != null} ? 'Continue' : 'Start'">Continue</a>
+        <span class="locked-label" th:if="${module.status.name() == 'LOCKED'}">Locked</span>
+      </article>
+    </section>
+
+    <!--/* ===== ACTIVE CASE (the notice behind this pathway) ===== */-->
+    <section class="card case-strip" th:if="${dashboard.banReport != null}">
+      <div>
+        <h2>Active Case</h2>
+        <p class="muted">
+          <span th:text="${dashboard.banReport.platform.displayName}">Xbox</span>
+          &middot;
+          <span th:text="${dashboard.banReport.stated_reason}">Personal insults</span>
+          &middot;
+          <span th:text="'Reference: ' + (${dashboard.banReport.platformCaseNumber} ?: 'not provided')">Reference</span>
+        </p>
+      </div>
+      <a class="secondary-button"
+         th:href="@{/pathways/{p}/report(p=${dashboard.pathway.pathwayId})}">View appeal packet</a>
+    </section>
+
+  </th:block>
+</main>
+
+</body>
+</html>

@@ -1,12 +1,14 @@
 package com.playhavior.model;
 
 /**
- * Carries two values out of CategoryMappingService.mapReason(): the category and the pathway.
- * WHY a record: a method can only return one object; a record bundles both,
+ * Carries the three mapping decisions out of CategoryMappingService.mapReason():
+ * the category, the pathway code and the reintegration track.
+ * WHY a record: a method can only return one object; a record bundles them,
  *     is immutable, and Java generates the constructor and accessors.
  */
 public record MappingResult(
         ViolationCategory category,
-        PathwayCode pathway
+        PathwayCode pathway,
+        ReintegrationTrack track
 ) {
 }

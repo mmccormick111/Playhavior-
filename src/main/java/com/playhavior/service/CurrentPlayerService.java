@@ -4,6 +4,8 @@ import com.playhavior.entity.Player;
 import com.playhavior.repository.PlayerProfileRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * Answers "which player is using the app right now?" (service layer).
  *
@@ -34,5 +36,12 @@ public class CurrentPlayerService {
                                         + "player before submitting a notice."
                         )
                 );
+    }
+
+    // Same lookup, but empty instead of an error (used for the nav-bar avatar)
+    public Optional<Player> findCurrentPlayer() {
+        return playerRepository.findAll()
+                .stream()
+                .findFirst();
     }
 }

@@ -2,6 +2,7 @@ package com.playhavior.service;
 
 import com.playhavior.model.MappingResult;
 import com.playhavior.model.PathwayCode;
+import com.playhavior.model.ReintegrationTrack;
 import com.playhavior.model.ViolationCategory;
 import org.springframework.stereotype.Service;
 
@@ -320,7 +321,7 @@ public class CategoryMappingService {
             );
         }
 
-        return new MappingResult(category, pathway);
+        return new MappingResult(category, pathway, trackFor(category));
     }
 
     /*
@@ -330,5 +331,36 @@ public class CategoryMappingService {
     public boolean isRecognizedReason(String reasonKey) {
         return reasonKey != null
                 && reasonToCategory.containsKey(reasonKey);
+    }
+
+    // ===== TRACK ROUTING (framework Phase 2) =====
+
+    /*
+     * Routes each category into one of the two specialised tracks.
+     * SOCIAL_BEHAVIORAL: harm done to other PEOPLE (needs perspective transformation).
+     * SYSTEM_INTEGRITY:  harm done to the GAME / ACCOUNTS (needs an integrity audit).
+     * WHY a switch expression: every ViolationCategory must be routed, so adding a
+     *     new category without a track will not compile.
+     * NOTE: impersonation, illegal/dangerous activity and "other" are routed to the
+     *     social track because they target or endanger other players.
+     */
+    public ReintegrationTrack trackFor(ViolationCategory category) {
+        return switch (category) {
+            case SCAMS_FRAUD_PHISHING,
+                 CHEATING_EXPLOITS_UNFAIR_PLAY,
+                 ACCOUNT_PLATFORM_ABUSE -> ReintegrationTrack.SYSTEM_INTEGRITY;
+
+            case HARASSMENT_BULLYING,
+                 HATE_DISCRIMINATION,
+                 THREATS_VIOLENT_INTIMIDATION,
+                 SELF_HARM_SUICIDE_ENCOURAGEMENT,
+                 SEXUAL_HARASSMENT_SEXUAL_CONTENT,
+                 PRIVACY_DOXXING,
+                 IMPERSONATION_DECEPTION,
+                 SPAM_COMMUNICATION_ABUSE,
+                 ILLEGAL_DANGEROUS_ACTIVITY,
+                 INAPPROPRIATE_EXPLICIT_CONTENT,
+                 OTHER_PLATFORM_SPECIFIC -> ReintegrationTrack.SOCIAL_BEHAVIORAL;
+        };
     }
 }

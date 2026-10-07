@@ -4,6 +4,7 @@ import com.playhavior.model.ModuleStatus;
 import com.playhavior.model.PathwayCode;
 import com.playhavior.model.PathwayMode;
 import com.playhavior.model.PersonalizationLevel;
+import com.playhavior.model.ReintegrationTrack;
 import com.playhavior.model.ViolationCategory;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,6 +33,8 @@ import java.util.List;
  *   - one PlayerCase     (@OneToOne, case_id, unique: one pathway per case)
  *   - one PlatformPolicy (@ManyToOne, policy_id: the rules version it cites)
  *   - many PathwayModule (@OneToMany, mappedBy "pathway", cascade ALL)
+ *   - one ReintegrationContract (@OneToOne, mappedBy "pathway", cascade ALL;
+ *         created when the Probationary Contract module is completed)
  * CREATED BY: PlayhaviorWorkflowService.buildLearningPathway() (FLOW step 5)
  * READ BY: LearningPathwayController -> pathway-details.html (FLOW step 7)
  */
@@ -62,6 +65,11 @@ public class LearningPathway {
     @Enumerated(EnumType.STRING)
     @Column(name = "pathway_mode", nullable = false)
     private PathwayMode pathwayMode;
+
+    // Social & Behavioral or System Integrity (framework Phase 2 routing)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "track", nullable = false, length = 30)
+    private ReintegrationTrack track;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "personalization_level", nullable = false)
@@ -99,6 +107,15 @@ public class LearningPathway {
     @OrderBy("moduleOrder ASC")
     private List<PathwayModule> modules = new ArrayList<>();
 
+    // The player's pledges + reflection (framework Phase 4). Null until signed.
+    // mappedBy: the foreign key (pathway_id) lives in reintegration_contracts.
+    @OneToOne(
+            mappedBy = "pathway",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private ReintegrationContract contract;
+
     // Required by Hibernate: it creates an empty object, then fills it from the row
     public LearningPathway() {
     }
@@ -132,6 +149,32 @@ public class LearningPathway {
         return totalModules == 0
                 ? 0
                 : getCompletedModules() * 100 / totalModules;
+    }
+
+    // The module the player should do next (the AVAILABLE one), or null when done
+    public PathwayModule getNextModule() {
+        return modules.stream()
+                .filter(module -> module.getStatus() == ModuleStatus.AVAILABLE)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public boolean isFinished() {
+        return totalModules > 0 && getCompletedModules() == totalModules;
+    }
+
+    // Sum of Standing Points earned in the Accountability Sandbox
+    public int getStandingPoints() {
+        return modules.stream()
+                .mapToInt(PathwayModule::getStandingPoints)
+                .sum();
+    }
+
+    // Time actually spent in modules (seconds), for "Time Invested"
+    public long getSecondsInvested() {
+        return modules.stream()
+                .mapToLong(PathwayModule::getSecondsSpent)
+                .sum();
     }
 
     public int getTotalLessons() {
@@ -222,5 +265,25 @@ public class LearningPathway {
 
     public List<PathwayModule> getModules() {
         return modules;
+    }
+
+    public ReintegrationTrack getTrack() {
+        return track;
+    }
+
+    public void setTrack(ReintegrationTrack track) {
+        this.track = track;
+    }
+
+    public ReintegrationContract getContract() {
+        return contract;
+    }
+
+    // Keeps both sides of the one-to-one in sync (like addModule)
+    public void setContract(ReintegrationContract contract) {
+        this.contract = contract;
+        if (contract != null) {
+            contract.setPathway(this);
+        }
     }
 }

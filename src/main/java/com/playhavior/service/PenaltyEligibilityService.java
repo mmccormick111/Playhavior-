@@ -16,7 +16,7 @@ import java.time.Duration;
  *   1. PERMANENT_BAN                                     -> REINSTATEMENT_SUPPORT
  *   2. TEMPORARY_BAN / ACCOUNT_SUSPENSION >= 7 days      -> REINSTATEMENT_SUPPORT
  *   3. anything else (shorter bans, restrictions, ...)   -> EDUCATIONAL_ONLY
- * RESULT: REINSTATEMENT_SUPPORT gets 5 modules, EDUCATIONAL_ONLY gets 3 (ModulePlanService).
+ * RESULT: REINSTATEMENT_SUPPORT gets 4 modules (incl. the appeal packet), EDUCATIONAL_ONLY 3.
  * WHY the 7 lives in application.properties: a business rule you can tune
  *     without changing code.
  */

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  PAGE: Module 1, The Validation Hub (framework Phase 1: Contextual Disorientation)
+  RENDERED BY: ModuleController.showModule() for ModuleType.VALIDATION_HUB
+  MODEL: ${pathway}, ${module}, ${banReport}, ${policyRules}, ${reviewMode}
+  DESIGN:
+    - Signaling + Spatial Contiguity (Mayer): the notice is shown first, with the
+      flagged behaviour highlighted right next to the rule it breaks.
+    - Disorienting Dilemma (Mezirow): the player must click the flagged behaviour
+      to unlock the path. Clicking a context card (platform, penalty, date) counts
+      as an extra attempt, which feeds First-Pass Accuracy.
+  JS: /js/modules.js (data-module="validation-hub")
+*/-->
+
+<head th:replace="~{fragments/layout :: head('Validation Hub')}"></head>
+
+<body>
+
+<header th:replace="~{fragments/layout :: header('pathway')}"></header>
+
+<main class="page-shell module-page" data-module="validation-hub">
+
+  <section th:replace="~{fragments/module :: intro}"></section>
+  <div th:replace="~{fragments/module :: messages}"></div>
+
+  <!--/* The Disorienting Dilemma statement */-->
+  <div class="dilemma-banner" role="note">
+    Your restriction is for
+    <strong th:text="${@labels.of(pathway.violationCategory)}">Harassment Bullying</strong>.
+    To appeal or reduce this penalty, you must complete this accountability path.
+    Your responses will be reviewed.
+  </div>
+
+  <section class="card">
+    <h2>Your Official Violation Notice</h2>
+    <p class="muted">Click the behavior that led to your restriction to unlock this module.</p>
+
+    <div class="notice-grid">
+      <!--/* Context cards (decoys): clicking these is not the answer */-->
+      <button type="button" class="notice-item" data-key="platform">
+        <span class="notice-label">Platform</span>
+        <span th:text="${banReport.platform.displayName}">Xbox</span>
+      </button>
+      <button type="button" class="notice-item" data-key="penalty">
+        <span class="notice-label">Penalty</span>
+        <span th:text="${@labels.of(banReport.penaltyType)}
+                       + (${banReport.penaltyDurationAmount != null}
+                          ? ' (' + ${banReport.penaltyDurationAmount} + ' ' + ${@labels.of(banReport.penaltyDurationUnit)} + ')'
+                          : '')">Temporary Ban</span>
+      </button>
+      <button type="button" class="notice-item" data-key="date">
+        <span class="notice-label">Date of notice</span>
+        <span th:text="${#temporals.format(banReport.banIssueDate, 'MMM d, yyyy')}">Sep 1, 2026</span>
+      </button>
+
+      <!--/* The flagged behaviour (the correct click), highlighted (Signaling) */-->
+      <button type="button" class="notice-item flagged-item" data-key="flagged">
+        <span class="notice-label">Flagged behavior</span>
+        <strong th:text="${banReport.stated_reason}">Personal insults</strong>
+        <span class="flagged-log" th:if="${banReport.evidenceText != null}">
+          <span class="log-label">Evidence shown in your notice</span>
+          <mark th:text="${banReport.evidenceText}">evidence text</mark>
+        </span>
+      </button>
+    </div>
+
+    <!--/* Spatial Contiguity: the rule sits beside the behaviour it was broken by */-->
+    <div class="rule-panel" th:if="${!#lists.isEmpty(policyRules)}">
+      <span class="notice-label">The rule this breaks</span>
+      <p>
+        <strong th:text="${policyRules[0].sectionTitle}">Section</strong>
+        <span class="muted" th:if="${policyRules[0].sectionReference != null}"
+              th:text="'(' + ${policyRules[0].sectionReference} + ')'">(Standard 2)</span>:
+        <span th:text="${policyRules[0].ruleSummary}">Rule summary</span>
+      </p>
+    </div>
+
+    <p class="hub-hint" data-role="hint" aria-live="polite"></p>
+  </section>
+
+  <!--/* Unlock panel: shown by JS once the flagged behaviour is clicked */-->
+  <form class="card unlock-panel" method="post" th:unless="${reviewMode}" hidden
+        th:action="@{/pathways/{p}/modules/{m}/complete(p=${pathway.pathwayId}, m=${module.moduleId})}">
+    <input type="hidden" name="answer_hub" value="">
+    <input type="hidden" name="attempts_hub" value="1">
+    <h2>You've named it.</h2>
+    <p>
+      Recognising exactly what you did is the first step of accountability. The rest of this
+      path builds on it.
+    </p>
+    <button type="submit" class="primary-button">Begin my accountability path &rarr;</button>
+  </form>
+</main>
+
+<script th:src="@{/js/modules.js}"></script>
+</body>
+</html>

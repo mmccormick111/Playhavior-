@@ -15,11 +15,16 @@
 
 <main class="page-shell pathway-page">
 
+  <!--/* One-time messages after completing a module (flash attributes) */-->
+  <div class="notice-box" role="status" th:if="${flash}" th:text="${flash}">Module complete.</div>
+
   <!-- Summary chips -->
   <div class="chip-row">
     <span class="chip chip-navy"
           th:text="${@labels.of(pathway.violationCategory)}">Category</span>
     <span class="chip chip-purple"
+          th:text="${pathway.track.label}">Track</span>
+    <span class="chip chip-grey"
           th:text="${@labels.of(pathway.pathwayMode)}">Mode</span>
     <span class="chip chip-teal"
           th:text="${pathway.totalModules} + ' Modules'">5 Modules</span>
@@ -30,7 +35,11 @@
   <section class="page-introduction">
     <h1>Your Learning Pathway</h1>
     <h2 class="pathway-title" th:text="${pathway.pathwayTitle}">Respectful Communication</h2>
-    <p>Built around your situation. This is practice, not a test. Move at your own pace.</p>
+    <p>
+      Built around your situation and routed to the
+      <strong th:text="${pathway.track.focus}">Empathy &amp; Perspective Shift</strong> track.
+      Complete each module in order; your responses are recorded for your appeal packet.
+    </p>
   </section>
 
   <!-- Overall progress -->
@@ -77,25 +86,38 @@
             Module 1: Understanding Community Standards
           </h3>
           <p class="module-meta">
-            <span th:text="${module.lessonCount} + ' lessons'">3 lessons</span>
+            <span th:text="${module.lessonCount} + (${module.lessonCount == 1} ? ' activity' : ' activities')">3 activities</span>
             ·
             <span th:text="'⏱ ' + ${module.estimatedMinutes} + ' min'">⏱ 15 min</span>
           </p>
           <p class="module-description" th:text="${module.description}">Description</p>
         </div>
 
-        <!-- Lesson pages are not built yet, so the action is disabled. -->
-        <button type="button"
-                class="primary-button"
-                th:if="${module.status.name() == 'AVAILABLE'}"
-                disabled
-                title="Lesson content coming soon">
+        <!--/* AVAILABLE -> start/continue it; COMPLETED -> review it (ModuleController) */-->
+        <a class="primary-button"
+           th:if="${module.status.name() == 'AVAILABLE'}"
+           th:href="@{/pathways/{p}/modules/{m}(p=${pathway.pathwayId}, m=${module.moduleId})}"
+           th:text="${module.startedAt != null} ? 'Continue Module' : 'Start Module'">
           Start Module
-        </button>
+        </a>
+        <a class="secondary-button"
+           th:if="${module.status.name() == 'COMPLETED'}"
+           th:href="@{/pathways/{p}/modules/{m}(p=${pathway.pathwayId}, m=${module.moduleId})}">
+          Review
+        </a>
         <span class="locked-label" th:if="${module.status.name() == 'LOCKED'}">Locked</span>
       </article>
     </li>
   </ol>
+
+  <!--/* Link to the appeal packet (Completion page) */-->
+  <section class="card case-strip">
+    <div>
+      <h2 th:text="${pathway.finished} ? 'Your appeal packet is ready' : 'Your appeal packet'">Your appeal packet</h2>
+      <p class="muted">Your results are packaged for the platform's review team as you go.</p>
+    </div>
+    <a class="secondary-button" th:href="@{/pathways/{p}/report(p=${pathway.pathwayId})}">View packet</a>
+  </section>
 
   <!-- Notice details (what was saved from the form) -->
   <!--/* Reads the BanReport row; the reference code is what goes on the summary report */-->

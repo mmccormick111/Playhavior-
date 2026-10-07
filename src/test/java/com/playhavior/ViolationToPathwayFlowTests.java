@@ -3,7 +3,9 @@ package com.playhavior;
 import com.playhavior.entity.LearningPathway;
 import com.playhavior.entity.PathwayModule;
 import com.playhavior.model.ModuleStatus;
+import com.playhavior.model.ModuleType;
 import com.playhavior.model.PathwayMode;
+import com.playhavior.model.ReintegrationTrack;
 import com.playhavior.model.ViolationCategory;
 import com.playhavior.repository.BanReportRepository;
 import com.playhavior.repository.LearningPathwayRepository;
@@ -44,12 +46,12 @@ class ViolationToPathwayFlowTests {
     @Autowired
     private BanReportRepository banReportRepository;
 
-    // Proves FLOW step 1: / redirects to the notice form
+    // Proves FLOW step 1: / redirects to the player's dashboard
     @Test
     void homeRedirectsToNoticeForm() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name("redirect:/notices/new"));
+                .andExpect(view().name("redirect:/dashboard"));
     }
 
     // Proves FLOW step 2: the form renders, the stylesheet link is present
@@ -89,12 +91,21 @@ class ViolationToPathwayFlowTests {
                 .isEqualTo(ViolationCategory.HARASSMENT_BULLYING);
         assertThat(pathway.getPathwayMode())
                 .isEqualTo(PathwayMode.REINSTATEMENT_SUPPORT);
-        assertThat(pathway.getTotalModules()).isEqualTo(5);
+        assertThat(pathway.getTrack())
+                .isEqualTo(ReintegrationTrack.SOCIAL_BEHAVIORAL);
+        assertThat(pathway.getTotalModules()).isEqualTo(4);
+        assertThat(pathway.getModules())
+                .extracting(PathwayModule::getModuleType)
+                .containsExactly(
+                        ModuleType.VALIDATION_HUB,
+                        ModuleType.PERSPECTIVE_SHIFT,
+                        ModuleType.ACCOUNTABILITY_SANDBOX,
+                        ModuleType.PROBATIONARY_CONTRACT
+                );
         assertThat(pathway.getModules())
                 .extracting(PathwayModule::getStatus)
                 .containsExactly(
                         ModuleStatus.AVAILABLE,
-                        ModuleStatus.LOCKED,
                         ModuleStatus.LOCKED,
                         ModuleStatus.LOCKED,
                         ModuleStatus.LOCKED
@@ -106,7 +117,7 @@ class ViolationToPathwayFlowTests {
         mockMvc.perform(get("/pathways/" + pathway.getPathwayId()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Respectful Communication")))
-                .andExpect(content().string(containsString("Module 1: Understanding Xbox Community Standards")))
+                .andExpect(content().string(containsString("Module 1: Face Your Notice: The Validation Hub")))
                 .andExpect(content().string(containsString("XB-12345")))
                 .andExpect(content().string(containsString("Standard 2")));
     }

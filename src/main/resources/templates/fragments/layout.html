@@ -34,9 +34,11 @@
     </a>
 
     <div class="nav-links">
-      <!-- Dashboard and Completion pages are not built yet. -->
-      <!--/* TODO: turn these spans into links once the pages exist */-->
-      <span class="nav-disabled" title="Coming soon">Dashboard</span>
+      <a th:href="@{/dashboard}"
+         th:classappend="${active == 'dashboard'} ? 'active'"
+         th:attr="aria-current=${active == 'dashboard'} ? 'page'">
+        Dashboard
+      </a>
 
       <a th:href="@{/pathways/latest}"
          th:classappend="${active == 'pathway'} ? 'active'"
@@ -50,15 +52,21 @@
         Submit Notice
       </a>
 
-      <span class="nav-disabled" title="Coming soon">Completion</span>
+      <!--/* Completion = the appeal packet (CompletionController) */-->
+      <a th:href="@{/completion}"
+         th:classappend="${active == 'completion'} ? 'active'"
+         th:attr="aria-current=${active == 'completion'} ? 'page'">
+        Completion
+      </a>
     </div>
 
     <div class="nav-account">
       <button type="button" class="sign-out" disabled title="Login is not built yet">
         Sign out
       </button>
-      <!--/* TODO: show the signed-in player's initials instead of the demo "JL" */-->
-      <div class="avatar" aria-label="Demo player">JL</div>
+      <!--/* ${navInitials} comes from NavigationModelAdvice (added to every page) */-->
+      <div class="avatar" aria-label="Player initials"
+           th:text="${navInitials} ?: 'JL'">JL</div>
     </div>
 
   </nav>
